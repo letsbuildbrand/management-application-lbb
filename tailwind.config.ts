@@ -62,10 +62,11 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // AI-inspired colors
-        "ai-blue": "hsl(var(--ai-blue))",
-        "ai-cyan": "hsl(var(--ai-cyan))",
-        "ai-green": "hsl(var(--ai-green))",
+        // Logo-inspired colors
+        "logo-background": "hsl(var(--logo-background))",
+        "logo-red": "hsl(var(--logo-red))",
+        "logo-yellow": "hsl(var(--logo-yellow))",
+        "logo-purple": "hsl(var(--logo-purple))",
       },
       borderRadius: {
         lg: "var(--radius)",

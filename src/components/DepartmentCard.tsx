@@ -12,13 +12,13 @@ export function DepartmentCard({ title, description, icon, className, ...props }
   return (
     <Card
       className={cn(
-        "h-full flex flex-col justify-between p-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:border-ai-blue hover:scale-[1.02]",
+        "h-full flex flex-col justify-between p-6 transition-all duration-300 ease-in-out hover:shadow-xl hover:border-logo-yellow hover:scale-[1.02]",
         className
       )}
       {...props}
     >
       <CardHeader className="p-0 pb-4">
-        <div className="mb-3 text-ai-cyan dark:text-ai-green">{icon}</div>
+        <div className="mb-3 text-logo-red dark:text-logo-yellow">{icon}</div>
         <CardTitle className="text-xl font-semibold">{title}</CardTitle>
         <CardDescription className="text-muted-foreground mt-2">{description}</CardDescription>
       </CardHeader>
