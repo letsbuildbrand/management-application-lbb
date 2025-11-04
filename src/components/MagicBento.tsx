@@ -1,12 +1,13 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import './MagicBento.css';
+import { Target, Share2, Handshake, MessageCircleMore, Video, Code } from "lucide-react"; // Import icons
 
 export interface BentoCardProps {
   color?: string;
   title?: string;
   description?: string;
-  label?: string;
+  icon?: React.ReactNode; // Changed from label to icon
   textAutoHide?: boolean;
   disableAnimations?: boolean;
 }
@@ -33,39 +34,39 @@ const MOBILE_BREAKPOINT = 768;
 const cardData: BentoCardProps[] = [
   {
     color: '#060010',
-    title: 'Analytics',
-    description: 'Track user behavior',
-    label: 'Insights'
+    title: 'Lead Generation Department',
+    description: 'Focuses on identifying and attracting potential customers through various channels.',
+    icon: <Target className="h-8 w-8" />,
   },
   {
     color: '#060010',
-    title: 'Dashboard',
-    description: 'Centralized data view',
-    label: 'Overview'
+    title: 'Lead Assigning Department',
+    description: 'Efficiently distributes qualified leads to the most suitable sales representatives.',
+    icon: <Share2 className="h-8 w-8" />,
   },
   {
     color: '#060010',
-    title: 'Collaboration',
-    description: 'Work together seamlessly',
-    label: 'Teamwork'
+    title: 'Approaching Department',
+    description: 'Engages with potential clients, understanding their needs and presenting tailored solutions.',
+    icon: <Handshake className="h-8 w-8" />,
   },
   {
     color: '#060010',
-    title: 'Automation',
-    description: 'Streamline workflows',
-    label: 'Efficiency'
+    title: 'Client Communication and Relationship Department',
+    description: 'Manages all client interactions, ensuring satisfaction and fostering long-term partnerships.',
+    icon: <MessageCircleMore className="h-8 w-8" />,
   },
   {
     color: '#060010',
-    title: 'Integration',
-    description: 'Connect favorite tools',
-    label: 'Connectivity'
+    title: 'Video Editing Department',
+    description: 'Produces high-quality video content for marketing campaigns, presentations, and client projects.',
+    icon: <Video className="h-8 w-8" />,
   },
   {
     color: '#060010',
-    title: 'Security',
-    description: 'Enterprise-grade protection',
-    label: 'Protection'
+    title: 'Web Development Department',
+    description: 'Designs, develops, and maintains responsive and user-friendly websites and web applications.',
+    icon: <Code className="h-8 w-8" />,
   }
 ];
 
@@ -565,7 +566,7 @@ const MagicBento: React.FC<BentoProps> = ({
                 enableMagnetism={enableMagnetism}
               >
                 <div className="magic-bento-card__header">
-                  <div className="magic-bento-card__label">{card.label}</div>
+                  <div className="magic-bento-card__label">{card.icon}</div> {/* Changed to card.icon */}
                 </div>
                 <div className="magic-bento-card__content">
                   <h2 className="magic-bento-card__title">{card.title}</h2>
@@ -689,7 +690,7 @@ const MagicBento: React.FC<BentoProps> = ({
               }}
             >
               <div className="magic-bento-card__header">
-                <div className="magic-bento-card__label">{card.label}</div>
+                <div className="magic-bento-card__label">{card.icon}</div> {/* Changed to card.icon */}
               </div>
               <div className="magic-bento-card__content">
                 <h2 className="magic-bento-card__title">{card.title}</h2>
