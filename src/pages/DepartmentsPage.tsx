@@ -1,47 +1,8 @@
-import { DepartmentCard } from "@/components/DepartmentCard";
 import { Navbar } from "@/components/Navbar";
 import Dock from "@/components/Dock"; // Import the new Dock component
-import { Target, Share2, Handshake, MessageCircleMore, Video, Code, Home, LayoutGrid, User, Archive, Settings } from "lucide-react"; // Import icons for dock
+import MagicBento from "@/components/MagicBento"; // Import the new MagicBento component
+import { Home, LayoutGrid, User, Archive, Settings } from "lucide-react"; // Import icons for dock
 import { useNavigate } from "react-router-dom"; // Import useNavigate
-
-const departmentsData = [
-  {
-    title: "Lead Generation Department",
-    description: "Focuses on identifying and attracting potential customers through various channels.",
-    icon: <Target className="h-8 w-8" />,
-    className: "lg:col-span-1",
-  },
-  {
-    title: "Lead Assigning Department",
-    description: "Efficiently distributes qualified leads to the most suitable sales representatives.",
-    icon: <Share2 className="h-8 w-8" />,
-    className: "lg:col-span-1",
-  },
-  {
-    title: "Approaching Department",
-    description: "Engages with potential clients, understanding their needs and presenting tailored solutions.",
-    icon: <Handshake className="h-8 w-8" />,
-    className: "lg:col-span-1",
-  },
-  {
-    title: "Client Communication and Relationship Department",
-    description: "Manages all client interactions, ensuring satisfaction and fostering long-term partnerships.",
-    icon: <MessageCircleMore className="h-8 w-8" />,
-    className: "md:col-span-2 lg:col-span-2 flex flex-col",
-  },
-  {
-    title: "Video Editing Department",
-    description: "Produces high-quality video content for marketing campaigns, presentations, and client projects.",
-    icon: <Video className="h-8 w-8" />,
-    className: "lg:col-span-1",
-  },
-  {
-    title: "Web Development Department",
-    description: "Designs, develops, and maintains responsive and user-friendly websites and web applications.",
-    icon: <Code className="h-8 w-8" />,
-    className: "lg:col-span-1",
-  },
-];
 
 const DepartmentsPage = () => {
   const navigate = useNavigate();
@@ -64,17 +25,18 @@ const DepartmentsPage = () => {
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
-          {departmentsData.map((dept, index) => (
-            <DepartmentCard
-              key={index}
-              title={dept.title}
-              description={dept.description}
-              icon={dept.icon}
-              className={dept.className}
-            />
-          ))}
-        </div>
+        <MagicBento
+          textAutoHide={true}
+          enableStars={true}
+          enableSpotlight={true}
+          enableBorderGlow={true}
+          enableTilt={true}
+          enableMagnetism={true}
+          clickEffect={true}
+          spotlightRadius={300}
+          particleCount={12}
+          glowColor="132, 0, 255"
+        />
       </div>
       <Dock items={dockItems} /> {/* Added the Dock component here */}
     </div>
