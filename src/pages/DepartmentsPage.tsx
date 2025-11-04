@@ -25,7 +25,7 @@ const departmentsData = [
     title: "Client Communication and Relationship Department",
     description: "Manages all client interactions, ensuring satisfaction and fostering long-term partnerships.",
     icon: <MessageCircleMore className="h-8 w-8" />,
-    className: "lg:col-span-2 lg:row-span-2 flex flex-col", // Span 2 columns and 2 rows
+    className: "md:col-span-2 lg:col-span-2 flex flex-col", // Span 2 columns on medium and large screens
   },
   {
     title: "Video Editing Department",
@@ -43,16 +43,16 @@ const departmentsData = [
 
 const DepartmentsPage = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8 flex flex-col">
+    <div className="h-screen bg-background text-foreground p-4 flex flex-col"> {/* Changed min-h-screen to h-screen and reduced padding */}
       <div className="max-w-7xl mx-auto flex-grow w-full">
-        <div className="flex justify-between items-center mb-12">
+        <div className="flex justify-between items-center mb-8"> {/* Reduced bottom margin */}
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Our Departments
+            Welcome back, Yadish
           </h1>
           <ThemeToggle />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr"> {/* Adjusted grid columns and gap */}
           {departmentsData.map((dept, index) => (
             <DepartmentCard
               key={index}
