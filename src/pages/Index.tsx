@@ -1,4 +1,3 @@
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -15,9 +14,6 @@ const Index = () => {
             View Departments
           </Button>
         </Link>
-      </div>
-      <div className="absolute bottom-4">
-        <MadeWithDyad />
       </div>
     </div>
   );

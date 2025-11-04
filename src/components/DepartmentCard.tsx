@@ -12,7 +12,7 @@ export function DepartmentCard({ title, description, icon, className, ...props }
   return (
     <Card
       className={cn(
-        "h-full flex flex-col justify-between p-6 transition-all duration-200 ease-in-out hover:shadow-lg hover:border-primary",
+        "h-full flex flex-col justify-between p-6 transition-all duration-200 ease-in-out hover:shadow-lg hover:border-primary hover:-translate-y-1",
         className
       )}
       {...props}

@@ -1,5 +1,4 @@
 import { DepartmentCard } from "@/components/DepartmentCard";
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Target, Share2, Handshake, MessageCircleMore, Video, Code } from "lucide-react";
 
 const departmentsData = [
@@ -60,9 +59,6 @@ const DepartmentsPage = () => {
             />
           ))}
         </div>
-      </div>
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-        <MadeWithDyad />
       </div>
     </div>
   );
