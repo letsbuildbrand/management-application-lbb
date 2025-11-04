@@ -1,6 +1,8 @@
 import { DepartmentCard } from "@/components/DepartmentCard";
-import { Navbar } from "@/components/Navbar"; // Import the new Navbar component
-import { Target, Share2, Handshake, MessageCircleMore, Video, Code } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import Dock from "@/components/Dock"; // Import the new Dock component
+import { Target, Share2, Handshake, MessageCircleMore, Video, Code, Home, LayoutGrid, User, Archive, Settings } from "lucide-react"; // Import icons for dock
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const departmentsData = [
   {
@@ -42,15 +44,24 @@ const departmentsData = [
 ];
 
 const DepartmentsPage = () => {
+  const navigate = useNavigate();
+
+  const dockItems = [
+    { icon: <Home size={18} />, label: 'Home', onClick: () => navigate('/') },
+    { icon: <LayoutGrid size={18} />, label: 'Departments', onClick: () => navigate('/departments') },
+    { icon: <User size={18} />, label: 'Profile', onClick: () => navigate('/profile') },
+    { icon: <Archive size={18} />, label: 'Archive', onClick: () => alert('Archive functionality coming soon!') },
+    { icon: <Settings size={18} />, label: 'Settings', onClick: () => alert('Settings functionality coming soon!') },
+  ];
+
   return (
-    <div className="h-screen bg-background text-foreground flex flex-col"> {/* Removed padding from here */}
-      <Navbar /> {/* Added the Navbar component here */}
-      <div className="max-w-7xl mx-auto flex-grow w-full p-4"> {/* Added padding back to this inner div */}
-        <div className="flex justify-between items-center mb-8 mt-4"> {/* Adjusted top margin */}
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <Navbar />
+      <div className="flex-grow max-w-7xl mx-auto w-full p-4 pb-24"> {/* Added pb-24 for dock clearance */}
+        <div className="flex justify-between items-center mb-8 mt-4">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Welcome back, Yadish
           </h1>
-          {/* ThemeToggle is now inside Navbar, so removed from here */}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
@@ -65,6 +76,7 @@ const DepartmentsPage = () => {
           ))}
         </div>
       </div>
+      <Dock items={dockItems} /> {/* Added the Dock component here */}
     </div>
   );
 };
