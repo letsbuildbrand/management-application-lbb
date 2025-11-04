@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import './MagicBento.css';
-import { Target, Share2, Handshake, MessageCircleMore, Video, Code, DollarSign, CheckCircle, FileText, Settings, Compass, ShieldCheck, Gavel, Megaphone } from "lucide-react"; // Import new icons
+import { Target, Share2, Handshake, MessageCircleMore, Video, Code, DollarSign, CheckCircle, FileText, Settings, Compass, ShieldCheck, Gavel, Megaphone, User, Briefcase, MonitorPlay } from "lucide-react"; // Import new icons
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 export interface BentoCardProps {
   color?: string;
@@ -10,6 +11,7 @@ export interface BentoCardProps {
   icon?: React.ReactNode;
   textAutoHide?: boolean;
   disableAnimations?: boolean;
+  onClick?: () => void; // Added onClick property
 }
 
 export interface BentoProps {
@@ -73,6 +75,7 @@ const cardData: BentoCardProps[] = [
     title: 'Video Editing Department',
     description: 'Produces high-quality video content for marketing campaigns, presentations, and client projects.',
     icon: <Video className="h-8 w-8" />,
+    onClick: () => window.location.href = '/departments/video-editing', // Added onClick for navigation
   },
   {
     color: '#060010',
@@ -162,6 +165,7 @@ const ParticleCard: React.FC<{
   enableTilt?: boolean;
   clickEffect?: boolean;
   enableMagnetism?: boolean;
+  onClick?: () => void; // Added onClick prop
 }> = ({
   children,
   className = '',
@@ -171,7 +175,8 @@ const ParticleCard: React.FC<{
   glowColor = DEFAULT_GLOW_COLOR,
   enableTilt = true,
   clickEffect = false,
-  enableMagnetism = false
+  enableMagnetism = true,
+  onClick
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement[]>([]);
@@ -393,6 +398,7 @@ const ParticleCard: React.FC<{
       ref={cardRef}
       className={`${className} particle-container`}
       style={{ ...style, position: 'relative', overflow: 'hidden' }}
+      onClick={onClick} // Pass onClick to the div
     >
       {children}
     </div>
@@ -577,6 +583,7 @@ const MagicBento: React.FC<BentoProps> = ({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobileDetection();
   const shouldDisableAnimations = disableAnimations || isMobile;
+  const navigate = useNavigate(); // Initialize useNavigate
 
   return (
     <>
@@ -598,7 +605,8 @@ const MagicBento: React.FC<BentoProps> = ({
             style: {
               backgroundColor: card.color,
               '--glow-color': glowColor
-            } as React.CSSProperties
+            } as React.CSSProperties,
+            onClick: card.onClick ? () => card.onClick!() : undefined, // Pass onClick handler
           };
 
           if (enableStars) {

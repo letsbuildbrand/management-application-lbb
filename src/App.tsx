@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import DepartmentsPage from "./pages/DepartmentsPage";
 import ProfilePage from "./pages/ProfilePage"; // Import the new ProfilePage
 import ChangePasswordPage from "./pages/ChangePasswordPage"; // Import the new ChangePasswordPage
+import VideoEditingDepartmentPage from "./pages/VideoEditingDepartmentPage"; // Import the new VideoEditingDepartmentPage
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/departments" element={<DepartmentsPage />} />
           <Route path="/profile" element={<ProfilePage />} /> {/* New route for profile */}
           <Route path="/change-password" element={<ChangePasswordPage />} /> {/* New route for change password */}
+          <Route path="/departments/video-editing" element={<VideoEditingDepartmentPage />} /> {/* New route for Video Editing Department */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
