@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import Dock from "@/components/Dock"; // Import the new Dock component
 import MagicBento from "@/components/MagicBento"; // Import the new MagicBento component
+import { WelcomeHeader } from "@/components/WelcomeHeader"; // Import the new WelcomeHeader component
 import { Home, LayoutGrid, User, Archive, Settings } from "lucide-react"; // Import icons for dock
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 
@@ -19,11 +20,7 @@ const DepartmentsPage = () => {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       <div className="flex-grow max-w-7xl mx-auto w-full p-4 pb-24"> {/* Added pb-24 for dock clearance */}
-        <div className="flex justify-between items-center mb-8 mt-4">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Welcome back, Yadish
-          </h1>
-        </div>
+        <WelcomeHeader userName="Yadish" /> {/* Integrated the new WelcomeHeader */}
 
         <MagicBento
           textAutoHide={true}

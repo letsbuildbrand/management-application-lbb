@@ -39,6 +39,10 @@
     --logo-red: 10 80% 53%; /* Vibrant Orange-Red */
     --logo-yellow: 45 95% 55%; /* Bright Yellow-Gold */
     --logo-purple: 270 60% 39%; /* Rich Purple */
+
+    /* RGB values for glassmorphism */
+    --background-rgb: 255, 255, 255; /* White */
+    --border-rgb: 214, 214, 214; /* Light Gray */
   }
 
   .dark {
@@ -75,6 +79,10 @@
     --logo-red: 10 80% 53%;
     --logo-yellow: 45 95% 55%;
     --logo-purple: 270 60% 39%;
+
+    /* RGB values for glassmorphism */
+    --background-rgb: 15, 0, 26; /* Dark Maroon from logo (approx) */
+    --border-rgb: 55, 55, 55; /* Darker Gray */
   }
 }
 
@@ -85,5 +93,12 @@
 
   html {
     @apply bg-background text-foreground;
+  }
+
+  .glassmorphism-effect {
+    background-color: rgba(var(--background-rgb), 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(var(--border-rgb), 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 }
