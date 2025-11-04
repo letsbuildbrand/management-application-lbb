@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import './MagicBento.css';
-import { Target, Share2, Handshake, MessageCircleMore, Video, Code } from "lucide-react"; // Import icons
+import { Target, Share2, Handshake, MessageCircleMore, Video, Code, DollarSign, CheckCircle, FileText, Settings } from "lucide-react"; // Import new icons
 
 export interface BentoCardProps {
   color?: string;
   title?: string;
   description?: string;
-  icon?: React.ReactNode; // Changed from label to icon
+  icon?: React.ReactNode;
   textAutoHide?: boolean;
   disableAnimations?: boolean;
 }
@@ -67,6 +67,30 @@ const cardData: BentoCardProps[] = [
     title: 'Web Development Department',
     description: 'Designs, develops, and maintains responsive and user-friendly websites and web applications.',
     icon: <Code className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Finance Department',
+    description: 'Manages all financial operations, budgeting, and reporting for the organization.',
+    icon: <DollarSign className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Deal Closing Department',
+    description: 'Specializes in finalizing agreements and securing successful deals with clients.',
+    icon: <CheckCircle className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Agreements and Contracts Department',
+    description: 'Handles the drafting, review, and management of all legal agreements and contracts.',
+    icon: <FileText className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Operations Department',
+    description: 'Oversees daily operations, ensuring efficiency and smooth workflow across all departments.',
+    icon: <Settings className="h-8 w-8" />,
   }
 ];
 
@@ -566,7 +590,7 @@ const MagicBento: React.FC<BentoProps> = ({
                 enableMagnetism={enableMagnetism}
               >
                 <div className="magic-bento-card__header">
-                  <div className="magic-bento-card__label">{card.icon}</div> {/* Changed to card.icon */}
+                  <div className="magic-bento-card__label">{card.icon}</div>
                 </div>
                 <div className="magic-bento-card__content">
                   <h2 className="magic-bento-card__title">{card.title}</h2>
@@ -690,7 +714,7 @@ const MagicBento: React.FC<BentoProps> = ({
               }}
             >
               <div className="magic-bento-card__header">
-                <div className="magic-bento-card__label">{card.icon}</div> {/* Changed to card.icon */}
+                <div className="magic-bento-card__label">{card.icon}</div>
               </div>
               <div className="magic-bento-card__content">
                 <h2 className="magic-bento-card__title">{card.title}</h2>
