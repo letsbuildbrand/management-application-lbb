@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import './MagicBento.css';
-import { Target, Share2, Handshake, MessageCircleMore, Video, Code, DollarSign, CheckCircle, FileText, Settings, Compass, ShieldCheck } from "lucide-react"; // Import new icons
+import { Target, Share2, Handshake, MessageCircleMore, Video, Code, DollarSign, CheckCircle, FileText, Settings, Compass, ShieldCheck, Gavel, Megaphone } from "lucide-react"; // Import new icons
 
 export interface BentoCardProps {
   color?: string;
@@ -103,6 +103,18 @@ const cardData: BentoCardProps[] = [
     title: 'Quality Assurance (QA) Department',
     description: 'Guarantees the quality and functionality of all deliverables before they reach the client.',
     icon: <ShieldCheck className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Legal Department',
+    description: 'Provides legal counsel and ensures compliance with all relevant laws and regulations.',
+    icon: <Gavel className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Marketing Department',
+    description: 'Develops and executes strategies to promote services and attract new clients.',
+    icon: <Megaphone className="h-8 w-8" />,
   }
 ];
 
