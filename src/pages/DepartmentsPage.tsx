@@ -1,20 +1,20 @@
 import { Navbar } from "@/components/Navbar";
-import Dock from "@/components/Dock"; // Import the new Dock component
+// import Dock from "@/components/Dock"; // Commented out the import for Dock component
 import MagicBento from "@/components/MagicBento"; // Import the new MagicBento component
 import { WelcomeHeader } from "@/components/WelcomeHeader"; // Import the new WelcomeHeader component
-import { Home, LayoutGrid, User, Archive, Settings } from "lucide-react"; // Import icons for dock
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+// import { Home, LayoutGrid, User, Archive, Settings } from "lucide-react"; // Commented out icons for dock
+// import { useNavigate } from "react-router-dom"; // Commented out useNavigate
 
 const DepartmentsPage = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Commented out useNavigate
 
-  const dockItems = [
-    { icon: <Home size={18} />, label: 'Home', onClick: () => navigate('/') },
-    { icon: <LayoutGrid size={18} />, label: 'Departments', onClick: () => navigate('/departments') },
-    { icon: <User size={18} />, label: 'Profile', onClick: () => navigate('/profile') },
-    { icon: <Archive size={18} />, label: 'Archive', onClick: () => alert('Archive functionality coming soon!') },
-    { icon: <Settings size={18} />, label: 'Settings', onClick: () => alert('Settings functionality coming soon!') },
-  ];
+  // const dockItems = [ // Commented out dockItems
+  //   { icon: <Home size={18} />, label: 'Home', onClick: () => navigate('/') },
+  //   { icon: <LayoutGrid size={18} />, label: 'Departments', onClick: () => navigate('/departments') },
+  //   { icon: <User size={18} />, label: 'Profile', onClick: () => navigate('/profile') },
+  //   { icon: <Archive size={18} />, label: 'Archive', onClick: () => alert('Archive functionality coming soon!') },
+  //   { icon: <Settings size={18} />, label: 'Settings', onClick: () => alert('Settings functionality coming soon!') },
+  // ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -35,7 +35,7 @@ const DepartmentsPage = () => {
           glowColor="132, 0, 255"
         />
       </div>
-      <Dock items={dockItems} /> {/* Added the Dock component here */}
+      {/* <Dock items={dockItems} /> */} {/* Commented out the Dock component here */}
     </div>
   );
 };
