@@ -46,6 +46,18 @@ const cardData: BentoCardProps[] = [
   },
   {
     color: '#060010',
+    title: 'Operations Department', // Moved to be the first large card
+    description: 'Oversees daily operations, ensuring efficiency and smooth workflow across all departments.',
+    icon: <Settings className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
+    title: 'Deal Closing Department', // Moved to be the second large card
+    description: 'Specializes in finalizing agreements and securing successful deals with clients.',
+    icon: <CheckCircle className="h-8 w-8" />,
+  },
+  {
+    color: '#060010',
     title: 'Approaching Department',
     description: 'Engages with potential clients, understanding their needs and presenting tailored solutions.',
     icon: <Handshake className="h-8 w-8" />,
@@ -76,21 +88,9 @@ const cardData: BentoCardProps[] = [
   },
   {
     color: '#060010',
-    title: 'Deal Closing Department',
-    description: 'Specializes in finalizing agreements and securing successful deals with clients.',
-    icon: <CheckCircle className="h-8 w-8" />,
-  },
-  {
-    color: '#060010',
     title: 'Agreements and Contracts Department',
     description: 'Handles the drafting, review, and management of all legal agreements and contracts.',
     icon: <FileText className="h-8 w-8" />,
-  },
-  {
-    color: '#060010',
-    title: 'Operations Department',
-    description: 'Oversees daily operations, ensuring efficiency and smooth workflow across all departments.',
-    icon: <Settings className="h-8 w-8" />,
   },
   {
     color: '#060010',
