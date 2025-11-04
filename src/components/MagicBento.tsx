@@ -155,7 +155,7 @@ const updateCardGlowProperties = (card: HTMLElement, mouseX: number, mouseY: num
   card.style.setProperty('--glow-radius', `${radius}px`);
 };
 
-const ParticleCard: React.FC<{
+export const ParticleCard: React.FC<{ // Exported ParticleCard
   children: React.ReactNode;
   className?: string;
   disableAnimations?: boolean;
@@ -405,7 +405,7 @@ const ParticleCard: React.FC<{
   );
 };
 
-const GlobalSpotlight: React.FC<{
+export const GlobalSpotlight: React.FC<{ // Exported GlobalSpotlight
   gridRef: React.RefObject<HTMLDivElement | null>;
   disableAnimations?: boolean;
   enabled?: boolean;
@@ -543,7 +543,7 @@ const GlobalSpotlight: React.FC<{
   return null;
 };
 
-const BentoCardGrid: React.FC<{
+export const BentoCardGrid: React.FC<{ // Exported BentoCardGrid
   children: React.ReactNode;
   gridRef?: React.RefObject<HTMLDivElement | null>;
 }> = ({ children, gridRef }) => (
@@ -552,7 +552,7 @@ const BentoCardGrid: React.FC<{
   </div>
 );
 
-const useMobileDetection = () => {
+export const useMobileDetection = () => { // Exported useMobileDetection
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
