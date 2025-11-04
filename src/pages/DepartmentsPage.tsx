@@ -1,5 +1,5 @@
 import { DepartmentCard } from "@/components/DepartmentCard";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Navbar } from "@/components/Navbar"; // Import the new Navbar component
 import { Target, Share2, Handshake, MessageCircleMore, Video, Code } from "lucide-react";
 
 const departmentsData = [
@@ -25,7 +25,7 @@ const departmentsData = [
     title: "Client Communication and Relationship Department",
     description: "Manages all client interactions, ensuring satisfaction and fostering long-term partnerships.",
     icon: <MessageCircleMore className="h-8 w-8" />,
-    className: "md:col-span-2 lg:col-span-2 flex flex-col", // Span 2 columns on medium and large screens
+    className: "md:col-span-2 lg:col-span-2 flex flex-col",
   },
   {
     title: "Video Editing Department",
@@ -43,16 +43,17 @@ const departmentsData = [
 
 const DepartmentsPage = () => {
   return (
-    <div className="h-screen bg-background text-foreground p-4 flex flex-col"> {/* Changed min-h-screen to h-screen and reduced padding */}
-      <div className="max-w-7xl mx-auto flex-grow w-full">
-        <div className="flex justify-between items-center mb-8"> {/* Reduced bottom margin */}
+    <div className="h-screen bg-background text-foreground flex flex-col"> {/* Removed padding from here */}
+      <Navbar /> {/* Added the Navbar component here */}
+      <div className="max-w-7xl mx-auto flex-grow w-full p-4"> {/* Added padding back to this inner div */}
+        <div className="flex justify-between items-center mb-8 mt-4"> {/* Adjusted top margin */}
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Welcome back, Yadish
           </h1>
-          <ThemeToggle />
+          {/* ThemeToggle is now inside Navbar, so removed from here */}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr"> {/* Adjusted grid columns and gap */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
           {departmentsData.map((dept, index) => (
             <DepartmentCard
               key={index}
