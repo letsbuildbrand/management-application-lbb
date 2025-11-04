@@ -49,6 +49,11 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* AI-inspired colors */
+    --ai-blue: 217 91.2% 59.8%; /* Vibrant blue */
+    --ai-cyan: 185 78% 48%; /* Bright cyan */
+    --ai-green: 142 76% 36%; /* Energetic green */
   }
 
   .dark {
@@ -87,6 +92,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* AI-inspired colors for dark mode */
+    --ai-blue: 217 91.2% 59.8%;
+    --ai-cyan: 185 78% 48%;
+    --ai-green: 142 76% 36%;
   }
 }
 

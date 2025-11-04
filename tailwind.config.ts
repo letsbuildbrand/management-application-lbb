@@ -62,6 +62,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // AI-inspired colors
+        "ai-blue": "hsl(var(--ai-blue))",
+        "ai-cyan": "hsl(var(--ai-cyan))",
+        "ai-green": "hsl(var(--ai-green))",
       },
       borderRadius: {
         lg: "var(--radius)",

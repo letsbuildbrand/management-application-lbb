@@ -1,4 +1,5 @@
 import { DepartmentCard } from "@/components/DepartmentCard";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Target, Share2, Handshake, MessageCircleMore, Video, Code } from "lucide-react";
 
 const departmentsData = [
@@ -24,7 +25,7 @@ const departmentsData = [
     title: "Client Communication and Relationship Department",
     description: "Manages all client interactions, ensuring satisfaction and fostering long-term partnerships.",
     icon: <MessageCircleMore className="h-8 w-8" />,
-    className: "lg:col-span-2", 
+    className: "lg:col-span-2 lg:row-span-2 flex flex-col", // Span 2 columns and 2 rows
   },
   {
     title: "Video Editing Department",
@@ -42,13 +43,16 @@ const departmentsData = [
 
 const DepartmentsPage = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-12 tracking-tight">
-          Our Departments
-        </h1>
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8 flex flex-col">
+      <div className="max-w-7xl mx-auto flex-grow w-full">
+        <div className="flex justify-between items-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            Our Departments
+          </h1>
+          <ThemeToggle />
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           {departmentsData.map((dept, index) => (
             <DepartmentCard
               key={index}
