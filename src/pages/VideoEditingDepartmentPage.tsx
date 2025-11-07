@@ -21,7 +21,7 @@ const VideoEditingDepartmentPage = () => {
       title: "Video Editor",
       description: "Manage video editing tasks and projects.",
       icon: <MonitorPlay className="h-8 w-8" />,
-      onClick: () => { /* navigate('/video-editor-dashboard') */ alert("Video Editor dashboard coming soon!"); }
+      onClick: () => navigate('/video-editing-dashboard') // Navigate to the new dashboard
     },
     {
       title: "Manager",

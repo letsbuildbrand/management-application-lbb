@@ -62,6 +62,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        success: { // Added success color
+          DEFAULT: "hsl(142.1 76.2% 36.3%)", // A nice green
+          foreground: "hsl(142.1 76.2% 15%)", // Darker green for text
+        },
         // Logo-inspired colors
         "logo-background": "hsl(var(--logo-background))",
         "logo-red": "hsl(var(--logo-red))",

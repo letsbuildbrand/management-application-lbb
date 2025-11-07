@@ -9,6 +9,7 @@ import DepartmentsPage from "./pages/DepartmentsPage";
 import ProfilePage from "./pages/ProfilePage"; // Import the new ProfilePage
 import ChangePasswordPage from "./pages/ChangePasswordPage"; // Import the new ChangePasswordPage
 import VideoEditingDepartmentPage from "./pages/VideoEditingDepartmentPage"; // Import the new VideoEditingDepartmentPage
+import VideoEditorDashboardPage from "./pages/VideoEditorDashboardPage"; // Import the new VideoEditorDashboardPage
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/profile" element={<ProfilePage />} /> {/* New route for profile */}
           <Route path="/change-password" element={<ChangePasswordPage />} /> {/* New route for change password */}
           <Route path="/departments/video-editing" element={<VideoEditingDepartmentPage />} /> {/* New route for Video Editing Department */}
+          <Route path="/video-editing-dashboard" element={<VideoEditorDashboardPage />} /> {/* New route for Video Editor Dashboard */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
