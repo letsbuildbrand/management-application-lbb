@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,26 @@ import {
   Settings,
   HelpCircle,
   Bell,
-  CheckCircle2, // Added for completed tasks
-  AlertTriangle, // Added for 'Need changes'
+  CheckCircle2,
+  AlertTriangle,
+  Menu, // Added Menu icon for sidebar toggle
 } from "lucide-react";
 
 const VideoEditorDashboardPage = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       {/* SideNavBar */}
-      <aside className="flex flex-col w-64 bg-sidebar-DEFAULT p-4 text-sidebar-foreground shrink-0">
+      <aside
+        className={`flex flex-col bg-sidebar-DEFAULT p-4 text-sidebar-foreground shrink-0 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "w-64" : "w-0 overflow-hidden p-0"
+        }`}
+      >
         <div className="flex flex-col justify-between flex-grow">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -96,17 +107,22 @@ const VideoEditorDashboardPage = () => {
         <div className="p-8">
           {/* PageHeading */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div className="flex flex-col min-w-72">
-              <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
-                Project Dashboard
-              </h1>
-              <p className="mt-1 text-base font-normal leading-normal text-muted-foreground">
-                Manage your video editing workflow.
-              </p>
+            <div className="flex items-center gap-4 min-w-72"> {/* Added items-center and gap-4 */}
+              <Button variant="outline" size="icon" onClick={toggleSidebar} className="lg:hidden"> {/* Toggle button for smaller screens */}
+                <Menu className="h-5 w-5" />
+              </Button>
+              <div className="flex flex-col">
+                <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
+                  Project Dashboard
+                </h1>
+                <p className="mt-1 text-base font-normal leading-normal text-muted-foreground">
+                  Manage your video editing workflow.
+                </p>
+              </div>
             </div>
           </div>
           {/* Kanban Board */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"> {/* Adjusted grid columns for 5 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {/* Column: To-Do */}
             <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
               <div className="flex items-center justify-between">
