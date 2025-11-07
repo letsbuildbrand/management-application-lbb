@@ -11,6 +11,8 @@ import {
   Settings,
   HelpCircle,
   Bell,
+  CheckCircle2, // Added for completed tasks
+  AlertTriangle, // Added for 'Need changes'
 } from "lucide-react";
 
 const VideoEditorDashboardPage = () => {
@@ -104,7 +106,7 @@ const VideoEditorDashboardPage = () => {
             </div>
           </div>
           {/* Kanban Board */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"> {/* Adjusted grid columns for 5 columns */}
             {/* Column: To-Do */}
             <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
               <div className="flex items-center justify-between">
@@ -239,6 +241,82 @@ const VideoEditorDashboardPage = () => {
                 </p>
                 <p className="mt-3 text-sm font-normal text-muted-foreground">
                   Due: Oct 25
+                </p>
+              </div>
+            </div>
+            {/* New Column: Need changes */}
+            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-foreground">
+                  Need changes
+                </h2>
+                <span className="text-sm font-medium text-muted-foreground">
+                  1
+                </span>
+              </div>
+              {/* Card 7 */}
+              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant="outline" className="bg-destructive/20 text-destructive">
+                    Urgent
+                  </Badge>
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </div>
+                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
+                  Client Feedback Integration
+                </p>
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  Global Solutions
+                </p>
+                <p className="mt-3 text-sm font-normal text-muted-foreground">
+                  Due: Oct 26
+                </p>
+              </div>
+            </div>
+            {/* New Column: Completed */}
+            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-foreground">
+                  Completed
+                </h2>
+                <span className="text-sm font-medium text-muted-foreground">
+                  2
+                </span>
+              </div>
+              {/* Card 8 */}
+              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant="outline" className="bg-success/20 text-success">
+                    Finished
+                  </Badge>
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </div>
+                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
+                  Marketing Explainer Video
+                </p>
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  Innovate Inc.
+                </p>
+                <p className="mt-3 text-sm font-normal text-muted-foreground">
+                  Completed: Oct 20
+                </p>
+              </div>
+              {/* Card 9 */}
+              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant="outline" className="bg-success/20 text-success">
+                    Finished
+                  </Badge>
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </div>
+                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
+                  Company Holiday Greeting
+                </p>
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  Internal
+                </p>
+                <p className="mt-3 text-sm font-normal text-muted-foreground">
+                  Completed: Oct 18
                 </p>
               </div>
             </div>
