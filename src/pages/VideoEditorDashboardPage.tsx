@@ -13,8 +13,8 @@ import {
   Bell,
   CheckCircle2,
   AlertTriangle,
-  Menu, // Added Menu icon for sidebar toggle
 } from "lucide-react";
+import { HamburgerMenu } from "@/components/HamburgerMenu"; // Import the new HamburgerMenu component
 
 const VideoEditorDashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -107,10 +107,8 @@ const VideoEditorDashboardPage = () => {
         <div className="p-8">
           {/* PageHeading */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-4 min-w-72"> {/* Added items-center and gap-4 */}
-              <Button variant="outline" size="icon" onClick={toggleSidebar} className="lg:hidden"> {/* Toggle button for smaller screens */}
-                <Menu className="h-5 w-5" />
-              </Button>
+            <div className="flex items-center gap-4 min-w-72">
+              <HamburgerMenu isOpen={isSidebarOpen} onClick={toggleSidebar} className="lg:hidden" /> {/* Replaced Button with HamburgerMenu */}
               <div className="flex flex-col">
                 <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
                   Project Dashboard
