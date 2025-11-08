@@ -33,7 +33,7 @@ const VideoEditingDepartmentPage = () => {
       title: "Client",
       description: "View project progress and provide feedback.",
       icon: <User className="h-8 w-8" />,
-      onClick: () => { /* navigate('/video-editing-client-portal') */ alert("Client portal coming soon!"); }
+      onClick: () => navigate('/client-dashboard') // Navigate to the Client Dashboard
     },
     {
       title: "Client Assigner",
