@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,93 +13,107 @@ import {
   Bell,
   CheckCircle2,
   AlertTriangle,
+  Menu as MenuIcon, // Renamed to avoid conflict with react-pro-sidebar's Menu
 } from "lucide-react";
+import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar'; // Import react-pro-sidebar components
 
 const VideoEditorDashboardPage = () => {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+  };
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       {/* SideNavBar */}
-      <aside
-        className="flex flex-col bg-sidebar-DEFAULT p-4 text-sidebar-foreground shrink-0 w-64" // Always visible with fixed width
+      <Sidebar
+        collapsed={collapsed}
+        width="256px"
+        collapsedWidth="80px"
+        rootStyles={{
+          backgroundColor: 'hsl(var(--sidebar-DEFAULT))',
+          color: 'hsl(var(--sidebar-foreground))',
+          borderRight: '1px solid hsl(var(--border))',
+          transition: 'width 0.3s ease-in-out',
+          flexShrink: 0, // Prevent sidebar from shrinking
+        }}
+        className="h-screen"
       >
-        <div className="flex flex-col justify-between flex-grow">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_s5y2ZtGyGGSskVMSsw_H6jcxMOQFEmR67ohyClIOqzEbZcXulmI25oBi5Kd_B7dRuFgbkoYUU-nyNi4QEVvVtXqiCizcRE-hT-344Y-HZ3N1jgTxzLcYWs-G6Y0fPl1u5DBNc-otBTdvZk9oW8NKe5ljJ2pI-HhEn65QkQpYJf2L7znT_soB4ksZ_gsC3PjFnn-kfkUuv2agH6IR5hyXp0VhcwukL45ORp3oUrNZZ1gkGx6GxNcwmGXMBWvCY-tEbSTKAsBZAeCB"
-                  alt="User avatar for Alex Ray"
-                />
-                <AvatarFallback>AR</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <h1 className="text-base font-medium leading-normal text-sidebar-foreground">
-                  Alex Ray
-                </h1>
-                <p className="text-sm font-normal leading-normal text-muted-foreground">
-                  Video Editor
-                </p>
-              </div>
-            </div>
-            <nav className="flex flex-col gap-2 mt-4">
-              <Link
-                className="flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
-                to="#"
-              >
-                <LayoutDashboard className="h-5 w-5" />
-                <p className="text-sm font-medium leading-normal">Dashboard</p>
-              </Link>
-              <Link
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-primary/60"
-                to="#"
-              >
-                <Folder className="h-5 w-5" />
-                <p className="text-sm font-medium leading-normal">Projects</p>
-              </Link>
-              <Link
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-primary/60"
-                to="#"
-              >
-                <CalendarDays className="h-5 w-5" />
-                <p className="text-sm font-medium leading-normal">Calendar</p>
-              </Link>
-              <Link
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-primary/60"
-                to="#"
-              >
-                <Users className="h-5 w-5" />
-                <p className="text-sm font-medium leading-normal">Clients</p>
-              </Link>
-            </nav>
+        <div className="flex flex-col h-full p-4">
+          <div className="flex items-center gap-3 mb-4">
+            {!collapsed && (
+              <>
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_s5y2ZtGyGGSskVMSsw_H6jcxMOQFEmR67ohyClIOqzEbZcXulmI25oBi5Kd_B7dRuFgbkoYUU-nyNi4QEVvVtXqiCizcRE-hT-344Y-HZ3N1jgTxzLcYWs-G6Y0fPl1u5DBNc-otBTdvZk9oW8NKe5ljJ2pI-HhEn65QkQpYJf2L7znT_soB4ksZ_gsC3PjFnn-kfkUuv2agH6IR5hyXp0VhcwukL45ORp3oUrNZZ1gkGx6GxNcwmGXMBWvCY-tEbSTKAsBZAeCB"
+                    alt="User avatar for Alex Ray"
+                  />
+                  <AvatarFallback>AR</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <h1 className="text-base font-medium leading-normal text-sidebar-foreground">
+                    Alex Ray
+                  </h1>
+                  <p className="text-sm font-normal leading-normal text-muted-foreground">
+                    Video Editor
+                  </p>
+                </div>
+              </>
+            )}
+            <Button variant="ghost" size="icon" onClick={toggleCollapsed} className={collapsed ? "mx-auto" : ""}>
+              <MenuIcon className="h-5 w-5" />
+            </Button>
           </div>
-          <div className="flex flex-col gap-4">
-            <Button className="w-full">New Project</Button>
-            <div className="flex flex-col gap-1">
-              <Link
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-primary/60"
-                to="#"
-              >
-                <Settings className="h-5 w-5" />
-                <p className="text-sm font-medium leading-normal">Settings</p>
-              </Link>
-              <Link
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-primary/60"
-                to="#"
-              >
-                <HelpCircle className="h-5 w-5" />
-                <p className="text-sm font-medium leading-normal">Help</p>
-              </Link>
-            </div>
+
+          <Menu
+            menuItemStyles={{
+              button: ({ level, active, disabled, hover }) => {
+                return {
+                  backgroundColor: active ? 'hsl(var(--sidebar-primary))' : undefined,
+                  color: active ? 'hsl(var(--sidebar-primary-foreground))' : undefined,
+                  '&:hover': {
+                    backgroundColor: 'hsl(var(--sidebar-primary) / 0.6)',
+                    color: 'hsl(var(--sidebar-primary-foreground))',
+                  },
+                };
+              },
+            }}
+          >
+            <MenuItem icon={<LayoutDashboard className="h-5 w-5" />} component={<Link to="#" />}> Dashboard </MenuItem>
+            <MenuItem icon={<Folder className="h-5 w-5" />} component={<Link to="#" />}> Projects </MenuItem>
+            <MenuItem icon={<CalendarDays className="h-5 w-5" />} component={<Link to="#" />}> Calendar </MenuItem>
+            <MenuItem icon={<Users className="h-5 w-5" />} component={<Link to="#" />}> Clients </MenuItem>
+          </Menu>
+
+          <div className="mt-auto flex flex-col gap-4">
+            {!collapsed && <Button className="w-full">New Project</Button>}
+            <Menu
+              menuItemStyles={{
+                button: ({ level, active, disabled, hover }) => {
+                  return {
+                    backgroundColor: active ? 'hsl(var(--sidebar-primary))' : undefined,
+                    color: active ? 'hsl(var(--sidebar-primary-foreground))' : undefined,
+                    '&:hover': {
+                      backgroundColor: 'hsl(var(--sidebar-primary) / 0.6)',
+                      color: 'hsl(var(--sidebar-primary-foreground))',
+                    },
+                  };
+                },
+              }}
+            >
+              <MenuItem icon={<Settings className="h-5 w-5" />} component={<Link to="#" />}> Settings </MenuItem>
+              <MenuItem icon={<HelpCircle className="h-5 w-5" />} component={<Link to="#" />}> Help </MenuItem>
+            </Menu>
           </div>
         </div>
-      </aside>
+      </Sidebar>
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <main className={`flex-1 flex flex-col h-screen overflow-y-auto transition-all duration-300 ease-in-out ${collapsed ? 'ml-[80px]' : 'ml-[256px]'}`}>
         <div className="p-8">
           {/* PageHeading */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-4 min-w-72">
-              {/* Removed HamburgerMenu */}
               <div className="flex flex-col">
                 <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
                   Project Dashboard
