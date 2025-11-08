@@ -23,7 +23,7 @@ export interface Editor {
   workload: number; // Number of active projects
 }
 
-const mockEditors: Editor[] = [
+export const mockEditors: Editor[] = [
   { id: "editor1", name: "Alice Johnson", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Alice", workload: 2 },
   { id: "editor2", name: "Bob Smith", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Bob", workload: 1 },
   { id: "editor3", name: "Charlie Brown", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Charlie", workload: 3 },
