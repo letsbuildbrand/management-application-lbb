@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Video } from "lucide-react";
-import { VideoTrackingCard } from "@/components/VideoTrackingCard"; // Import the new component
+import { PlusCircle } from "lucide-react";
+import { VideoTrackingCard } from "@/components/VideoTrackingCard";
+import { KanbanBoard } from "@/components/KanbanBoard"; // Import KanbanBoard
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
 import { showSuccess } from "@/utils/toast";
 
 interface VideoUpdate {
@@ -83,6 +85,7 @@ const mockVideos: Video[] = [
 const ClientDashboardPage = () => {
   const [videos, setVideos] = useState<Video[]>(mockVideos);
   const [creditsUsed, setCreditsUsed] = useState(7); // Mock data for credits
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban"); // Default to Kanban
 
   const handleRequestNewVideo = () => {
     // In a real app, this would open a form or modal to submit a new video request
@@ -131,11 +134,22 @@ const ClientDashboardPage = () => {
             </div>
           </div>
 
-          <div className="space-y-6">
-            {videos.map((video) => (
-              <VideoTrackingCard key={video.id} video={video} />
-            ))}
-          </div>
+          <Tabs defaultValue="kanban" onValueChange={(value) => setViewMode(value as "kanban" | "list")} className="mb-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="kanban">Kanban View</TabsTrigger>
+              <TabsTrigger value="list">List View</TabsTrigger>
+            </TabsList>
+            <TabsContent value="kanban" className="mt-6">
+              <KanbanBoard videos={videos} />
+            </TabsContent>
+            <TabsContent value="list" className="mt-6">
+              <div className="space-y-6">
+                {videos.map((video) => (
+                  <VideoTrackingCard key={video.id} video={video} />
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
