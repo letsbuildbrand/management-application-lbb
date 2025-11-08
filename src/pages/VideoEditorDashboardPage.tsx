@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,22 +14,13 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-import { HamburgerMenu } from "@/components/HamburgerMenu"; // Import the new HamburgerMenu component
 
 const VideoEditorDashboardPage = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       {/* SideNavBar */}
       <aside
-        className={`flex flex-col bg-sidebar-DEFAULT p-4 text-sidebar-foreground shrink-0 transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? "w-64" : "w-0 overflow-hidden p-0"
-        }`}
+        className="flex flex-col bg-sidebar-DEFAULT p-4 text-sidebar-foreground shrink-0 w-64" // Always visible with fixed width
       >
         <div className="flex flex-col justify-between flex-grow">
           <div className="flex flex-col gap-4">
@@ -108,7 +99,7 @@ const VideoEditorDashboardPage = () => {
           {/* PageHeading */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-4 min-w-72">
-              <HamburgerMenu isOpen={isSidebarOpen} onClick={toggleSidebar} className="lg:hidden" /> {/* Replaced Button with HamburgerMenu */}
+              {/* Removed HamburgerMenu */}
               <div className="flex flex-col">
                 <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
                   Project Dashboard
