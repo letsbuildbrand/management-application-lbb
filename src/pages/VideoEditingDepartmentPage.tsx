@@ -1,44 +1,44 @@
 import React, { useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
-import { User, Briefcase, MonitorPlay, Users } from "lucide-react"; // Added Users icon
+import { User, Briefcase, MonitorPlay, Users, Crown } from "lucide-react"; // Added Crown icon for Manager
 import { useNavigate } from "react-router-dom";
-import { ParticleCard, BentoCardGrid, GlobalSpotlight, useMobileDetection } from "@/components/MagicBento"; // Import MagicBento components
+import { ParticleCard, BentoCardGrid, GlobalSpotlight, useMobileDetection } from "@/components/MagicBento";
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
 const DEFAULT_GLOW_COLOR = '132, 0, 255';
-const MOBILE_BREAKPOINT = 768; // Re-define or import if not available globally
+const MOBILE_BREAKPOINT = 768;
 
 const VideoEditingDepartmentPage = () => {
   const navigate = useNavigate();
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobileDetection();
-  const shouldDisableAnimations = isMobile; // Disable animations on mobile
+  const shouldDisableAnimations = isMobile;
 
   const options = [
     {
       title: "Video Editor",
       description: "Manage video editing tasks and projects.",
       icon: <MonitorPlay className="h-8 w-8" />,
-      onClick: () => navigate('/video-editing-dashboard') // Navigate to the new dashboard
+      onClick: () => navigate('/video-editing-dashboard')
     },
     {
       title: "Manager",
-      description: "Oversee the video editing team and workflow.",
-      icon: <Briefcase className="h-8 w-8" />,
-      onClick: () => { /* navigate('/video-editing-manager-dashboard') */ alert("Manager dashboard coming soon!"); }
+      description: "Oversee clients and manage project assignments.",
+      icon: <Crown className="h-8 w-8" />, // Using Crown icon for Manager
+      onClick: () => navigate('/manager-dashboard') // Navigate to the new Manager Dashboard
     },
     {
       title: "Client",
       description: "View project progress and provide feedback.",
       icon: <User className="h-8 w-8" />,
-      onClick: () => navigate('/client-dashboard') // Navigate to the Client Dashboard
+      onClick: () => navigate('/client-dashboard')
     },
     {
       title: "Client Assigner",
       description: "Assign clients to specific video editors.",
-      icon: <Users className="h-8 w-8" />, // Using Users icon for Client Assigner
+      icon: <Users className="h-8 w-8" />,
       onClick: () => { /* navigate('/client-assigner-dashboard') */ alert("Client Assigner dashboard coming soon!"); }
     },
   ];
@@ -50,11 +50,10 @@ const VideoEditingDepartmentPage = () => {
         <WelcomeHeader userName="Yadish" />
         <h2 className="text-3xl font-bold tracking-tight mb-8 text-left px-4">Video Editing Department Roles</h2>
 
-        {/* Global Spotlight for this grid */}
         <GlobalSpotlight
           gridRef={gridRef}
           disableAnimations={shouldDisableAnimations}
-          enabled={true} // Enable spotlight for this page
+          enabled={true}
           spotlightRadius={DEFAULT_SPOTLIGHT_RADIUS}
           glowColor={DEFAULT_GLOW_COLOR}
         />
@@ -65,7 +64,7 @@ const VideoEditingDepartmentPage = () => {
             const cardProps = {
               className: baseClassName,
               style: {
-                backgroundColor: '#060010', // Consistent dark background
+                backgroundColor: '#060010',
                 '--glow-color': DEFAULT_GLOW_COLOR
               } as React.CSSProperties,
               onClick: option.onClick,

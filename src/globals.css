@@ -53,6 +53,10 @@
     --sidebar-accent-foreground: 222.2 47.4% 11.2%; /* Dark Gray */
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 222.2 84% 4.9%;
+
+    /* Success color */
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 142.1 76.2% 15%;
   }
 
   .dark {

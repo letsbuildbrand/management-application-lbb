@@ -5,26 +5,12 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
-import { VideoTrackingCard } from "@/components/VideoTrackingCard";
-import { KanbanBoard } from "@/components/KanbanBoard"; // Import KanbanBoard
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
+import { VideoTrackingCard, Video } from "@/components/VideoTrackingCard"; // Import Video interface
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { showSuccess } from "@/utils/toast";
 
-interface VideoUpdate {
-  timestamp: string;
-  message: string;
-  status: "pending" | "in-progress" | "completed" | "review" | "feedback";
-}
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  currentStatus: string;
-  updates: VideoUpdate[];
-  notes: string[];
-}
+// The Video interface is now imported from VideoTrackingCard.tsx
 
 const mockVideos: Video[] = [
   {
@@ -39,6 +25,8 @@ const mockVideos: Video[] = [
       { timestamp: "2024-10-23 09:00 AM", message: "Script sent for client review.", status: "review" },
     ],
     notes: ["Please ensure the new logo is prominently featured."],
+    assignedEditorId: "editor1",
+    internalNotes: ["Editor needs to prioritize this, client is high value."],
   },
   {
     id: "v2",
@@ -52,6 +40,8 @@ const mockVideos: Video[] = [
       { timestamp: "2024-10-24 04:00 PM", message: "First editing pass complete.", status: "in-progress" },
     ],
     notes: [],
+    assignedEditorId: "editor2",
+    internalNotes: ["Waiting for client assets."],
   },
   {
     id: "v3",
@@ -65,6 +55,8 @@ const mockVideos: Video[] = [
       { timestamp: "2024-10-24 06:00 PM", message: "Client feedback requested.", status: "feedback" },
     ],
     notes: ["Looks good, just need to adjust the music volume in the intro."],
+    assignedEditorId: "editor1",
+    internalNotes: ["Follow up with client for feedback by EOD."],
   },
   {
     id: "v4",
@@ -79,6 +71,8 @@ const mockVideos: Video[] = [
       { timestamp: "2024-10-01 10:00 AM", message: "Project delivered.", status: "completed" },
     ],
     notes: [],
+    assignedEditorId: "editor3",
+    internalNotes: ["Archived project."],
   },
 ];
 
@@ -88,10 +82,8 @@ const ClientDashboardPage = () => {
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban"); // Default to Kanban
 
   const handleRequestNewVideo = () => {
-    // In a real app, this would open a form or modal to submit a new video request
     showSuccess("New video request initiated (form/modal needed).");
     console.log("Simulating new video request...");
-    // For demonstration, let's add a placeholder video
     const newVideo: Video = {
       id: `v${videos.length + 1}`,
       title: "New Project Request",
@@ -100,9 +92,10 @@ const ClientDashboardPage = () => {
       currentStatus: "Requested",
       updates: [{ timestamp: new Date().toLocaleString(), message: "New video request submitted by client.", status: "pending" }],
       notes: [],
+      internalNotes: ["New request, needs assignment."],
     };
     setVideos([newVideo, ...videos]);
-    setCreditsUsed(creditsUsed + 1); // Increment credits for new request
+    setCreditsUsed(creditsUsed + 1);
   };
 
   return (
@@ -125,7 +118,7 @@ const ClientDashboardPage = () => {
                   <CardTitle className="text-lg font-semibold">Credits Used This Month</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <p className="text-3xl font-bold text-primary">{creditsUsed} / 10</p> {/* Example: 10 available credits */}
+                  <p className="text-3xl font-bold text-primary">{creditsUsed} / 10</p>
                 </CardContent>
               </Card>
               <Button onClick={handleRequestNewVideo} className="h-10 px-5">

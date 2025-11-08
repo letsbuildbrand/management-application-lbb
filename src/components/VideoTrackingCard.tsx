@@ -19,7 +19,7 @@ interface VideoUpdate {
   status: "pending" | "in-progress" | "completed" | "review" | "feedback";
 }
 
-interface Video {
+export interface Video { // Exported for reuse
   id: string;
   title: string;
   description: string;
@@ -27,10 +27,14 @@ interface Video {
   currentStatus: string;
   updates: VideoUpdate[];
   notes: string[];
+  assignedEditorId?: string; // New: ID of the assigned editor
+  internalNotes?: string[]; // New: Notes visible only to the team/manager
 }
 
 interface VideoTrackingCardProps {
   video: Video;
+  showInternalNotes?: boolean; // New prop to conditionally show internal notes
+  onAddNote?: (videoId: string, note: string) => void; // New prop for adding notes
 }
 
 const getStatusIcon = (status: VideoUpdate['status']) => {
@@ -56,12 +60,13 @@ const getStatusBadgeVariant = (status: string) => {
     case "in-progress":
     case "editing":
     case "animation":
+    case "requested":
+    case "scripting":
       return "secondary";
     case "awaiting feedback":
     case "review":
     case "feedback":
       return "primary";
-    case "scripting":
     case "pending":
       return "outline";
     default:
@@ -69,14 +74,21 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video }) => {
+export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, showInternalNotes = false, onAddNote }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [videoNotes, setVideoNotes] = useState(video.notes);
+  const [internalVideoNotes, setInternalVideoNotes] = useState(video.internalNotes || []);
 
   const handleAddNote = () => {
     if (newNote.trim()) {
-      setVideoNotes([...videoNotes, newNote.trim()]);
+      if (showInternalNotes) {
+        setInternalVideoNotes([...internalVideoNotes, newNote.trim()]);
+        if (onAddNote) onAddNote(video.id, newNote.trim());
+      } else {
+        setVideoNotes([...videoNotes, newNote.trim()]);
+        if (onAddNote) onAddNote(video.id, newNote.trim()); // This might need to be adjusted if client notes are handled differently
+      }
       setNewNote("");
       showSuccess("Note added successfully!");
     }
@@ -123,9 +135,9 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video }) =
             </div>
           </div>
 
-          {/* Notes Section */}
+          {/* Client Notes Section */}
           <div className="space-y-3 pt-4">
-            <h3 className="text-md font-semibold">Your Notes</h3>
+            <h3 className="text-md font-semibold">Client Notes</h3>
             <div className="space-y-2">
               {videoNotes.length > 0 ? (
                 videoNotes.map((note, index) => (
@@ -135,21 +147,54 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video }) =
                   </p>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No notes added yet.</p>
+                <p className="text-sm text-muted-foreground">No client notes added yet.</p>
               )}
             </div>
-            <div className="flex space-x-2">
-              <Textarea
-                placeholder="Add a new note for this video..."
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                className="flex-grow"
-              />
-              <Button onClick={handleAddNote} className="shrink-0">
-                <PlusCircle className="h-4 w-4 mr-2" /> Add Note
-              </Button>
-            </div>
+            {/* Only allow adding client notes if not in manager view or if specific prop allows */}
+            {!showInternalNotes && (
+              <div className="flex space-x-2">
+                <Textarea
+                  placeholder="Add a new note for this video..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="flex-grow"
+                />
+                <Button onClick={handleAddNote} className="shrink-0">
+                  <PlusCircle className="h-4 w-4 mr-2" /> Add Note
+                </Button>
+              </div>
+            )}
           </div>
+
+          {/* Internal Notes Section (Manager/Team Only) */}
+          {showInternalNotes && (
+            <div className="space-y-3 pt-4 border-t border-border">
+              <h3 className="text-md font-semibold text-logo-purple">Internal Team Notes</h3>
+              <div className="space-y-2">
+                {internalVideoNotes.length > 0 ? (
+                  internalVideoNotes.map((note, index) => (
+                    <p key={index} className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                      <MessageSquareText className="inline h-4 w-4 mr-2 text-logo-purple" />
+                      {note}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No internal notes added yet.</p>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <Textarea
+                  placeholder="Add an internal team note..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="flex-grow"
+                />
+                <Button onClick={handleAddNote} className="shrink-0" variant="secondary">
+                  <PlusCircle className="h-4 w-4 mr-2" /> Add Internal Note
+                </Button>
+              </div>
+            </div>
+          )}
         </CollapsibleContent>
       </Card>
     </Collapsible>

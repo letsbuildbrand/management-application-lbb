@@ -1,24 +1,10 @@
 "use client";
 
 import React from "react";
-import { VideoTrackingCard } from "@/components/VideoTrackingCard";
+import { VideoTrackingCard, Video } from "@/components/VideoTrackingCard"; // Import Video interface
 import { Badge } from "@/components/ui/badge";
 
-interface VideoUpdate {
-  timestamp: string;
-  message: string;
-  status: "pending" | "in-progress" | "completed" | "review" | "feedback";
-}
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  currentStatus: string;
-  updates: VideoUpdate[];
-  notes: string[];
-}
+// VideoUpdate and Video interfaces are now imported from VideoTrackingCard.tsx
 
 interface KanbanBoardProps {
   videos: Video[];
@@ -58,7 +44,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos }) => {
   }));
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Adjusted grid columns for 3 columns */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {groupedVideos.map(column => (
         <div key={column.id} className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit min-w-[280px]">
           <div className="flex items-center justify-between">
