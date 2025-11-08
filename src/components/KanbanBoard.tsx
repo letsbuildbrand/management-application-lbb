@@ -32,15 +32,14 @@ const getStatusBadgeVariant = (status: string) => {
     case "in-progress":
     case "editing":
     case "animation":
+    case "requested":
+    case "scripting":
       return "secondary";
     case "awaiting feedback":
     case "review":
     case "feedback":
       return "primary";
-    case "scripting":
-    case "requested":
     case "pending":
-      return "outline";
     default:
       return "default";
   }
@@ -48,11 +47,8 @@ const getStatusBadgeVariant = (status: string) => {
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos }) => {
   const columns = [
-    { id: "requested", title: "Requested", statuses: ["requested"] },
-    { id: "scripting", title: "Scripting", statuses: ["scripting"] },
-    { id: "in-progress", title: "In Progress", statuses: ["in-progress", "editing", "animation"] },
-    { id: "review", title: "Under Review", statuses: ["review", "awaiting feedback"] },
-    { id: "feedback", title: "Need Changes", statuses: ["feedback"] },
+    { id: "in-progress", title: "In Progress", statuses: ["requested", "scripting", "in-progress", "editing", "animation"] },
+    { id: "need-approval", title: "Need Approval", statuses: ["review", "awaiting feedback", "feedback"] },
     { id: "completed", title: "Completed", statuses: ["completed", "approved"] },
   ];
 
@@ -62,7 +58,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos }) => {
   }));
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Adjusted grid columns for 3 columns */}
       {groupedVideos.map(column => (
         <div key={column.id} className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit min-w-[280px]">
           <div className="flex items-center justify-between">
