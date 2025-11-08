@@ -83,73 +83,75 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video }) =
   };
 
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
-        <div className="flex items-center space-x-4">
-          <img src={video.thumbnailUrl} alt={video.title} className="h-16 w-16 rounded-md object-cover" />
-          <div>
-            <CardTitle className="text-lg font-semibold">{video.title}</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">{video.description}</CardDescription>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
+      <Card className="w-full shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+          <div className="flex items-center space-x-4">
+            <img src={video.thumbnailUrl} alt={video.title} className="h-16 w-16 rounded-md object-cover" />
+            <div>
+              <CardTitle className="text-lg font-semibold">{video.title}</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">{video.description}</CardDescription>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Badge variant={getStatusBadgeVariant(video.currentStatus)}>{video.currentStatus}</Badge>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              <span className="sr-only">Toggle details</span>
-            </Button>
-          </CollapsibleTrigger>
-        </div>
-      </CardHeader>
-      <CollapsibleContent className="space-y-4 p-4 border-t border-border">
-        {/* Tracking Timeline */}
-        <div className="space-y-4">
-          <h3 className="text-md font-semibold">Project Timeline</h3>
-          <div className="relative pl-6">
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-border" />
-            {video.updates.map((update, index) => (
-              <div key={index} className="relative mb-4 last:mb-0">
-                <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-background z-10">
-                  {getStatusIcon(update.status)}
-                </div>
-                <div className="ml-2">
-                  <p className="text-sm font-medium">{update.message}</p>
-                  <p className="text-xs text-muted-foreground">{update.timestamp}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center space-x-4">
+            <Badge variant={getStatusBadgeVariant(video.currentStatus)}>{video.currentStatus}</Badge>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="icon">
+                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <span className="sr-only">Toggle details</span>
+              </Button>
+            </CollapsibleTrigger>
           </div>
-        </div>
+        </CardHeader>
+        <CollapsibleContent className="space-y-4 p-4 border-t border-border">
+          {/* Tracking Timeline */}
+          <div className="space-y-4">
+            <h3 className="text-md font-semibold">Project Timeline</h3>
+            <div className="relative pl-6">
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-border" />
+              {video.updates.map((update, index) => (
+                <div key={index} className="relative mb-4 last:mb-0">
+                  <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-background z-10">
+                    {getStatusIcon(update.status)}
+                  </div>
+                  <div className="ml-2">
+                    <p className="text-sm font-medium">{update.message}</p>
+                    <p className="text-xs text-muted-foreground">{update.timestamp}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Notes Section */}
-        <div className="space-y-3 pt-4">
-          <h3 className="text-md font-semibold">Your Notes</h3>
-          <div className="space-y-2">
-            {videoNotes.length > 0 ? (
-              videoNotes.map((note, index) => (
-                <p key={index} className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
-                  <MessageSquareText className="inline h-4 w-4 mr-2 text-primary" />
-                  {note}
-                </p>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No notes added yet.</p>
-            )}
+          {/* Notes Section */}
+          <div className="space-y-3 pt-4">
+            <h3 className="text-md font-semibold">Your Notes</h3>
+            <div className="space-y-2">
+              {videoNotes.length > 0 ? (
+                videoNotes.map((note, index) => (
+                  <p key={index} className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                    <MessageSquareText className="inline h-4 w-4 mr-2 text-primary" />
+                    {note}
+                  </p>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No notes added yet.</p>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <Textarea
+                placeholder="Add a new note for this video..."
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                className="flex-grow"
+              />
+              <Button onClick={handleAddNote} className="shrink-0">
+                <PlusCircle className="h-4 w-4 mr-2" /> Add Note
+              </Button>
+            </div>
           </div>
-          <div className="flex space-x-2">
-            <Textarea
-              placeholder="Add a new note for this video..."
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              className="flex-grow"
-            />
-            <Button onClick={handleAddNote} className="shrink-0">
-              <PlusCircle className="h-4 w-4 mr-2" /> Add Note
-            </Button>
-          </div>
-        </div>
-      </CollapsibleContent>
-    </Card>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
