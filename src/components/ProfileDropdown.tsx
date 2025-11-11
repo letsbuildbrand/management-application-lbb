@@ -12,22 +12,30 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useNavigate } from "react-router-dom";
 import { showSuccess } from "@/utils/toast"; // Assuming you have a toast utility
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 export function ProfileDropdown() {
   const navigate = useNavigate();
+  const { user, profile, signOut } = useSession(); // Get user and profile from session
 
-  const handleLogout = () => {
-    // In a real app, you would clear user session/token here
-    showSuccess("Logged out successfully!");
-    navigate("/"); // Redirect to home or login page
+  const handleLogout = async () => {
+    await signOut(); // Use the signOut function from context
   };
+
+  const getAvatarFallback = (firstName?: string, lastName?: string) => {
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  };
+
+  if (!user) {
+    return null; // Don't show dropdown if not logged in
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-9 w-9 cursor-pointer">
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" /> {/* Placeholder image */}
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarImage src={profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.first_name || 'User'}`} alt={profile?.first_name || "User"} />
+          <AvatarFallback>{getAvatarFallback(profile?.first_name, profile?.last_name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -39,6 +47,14 @@ export function ProfileDropdown() {
         <DropdownMenuItem asChild>
           <Link to="/change-password">Change Password</Link>
         </DropdownMenuItem>
+        {profile?.role === 'admin' && ( // Only show for admin role
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/super-admin-dashboard">Super Admin Dashboard</Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>Log Out</DropdownMenuItem>
       </DropdownMenuContent>

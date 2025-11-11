@@ -58,6 +58,9 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
             setProfile(profileData);
             // Redirect based on role
             switch (profileData.role) {
+              case 'admin':
+                navigate('/super-admin-dashboard'); // Redirect admin to their dashboard
+                break;
               case 'client_assigner':
                 navigate('/client-assigner-dashboard');
                 break;
@@ -92,6 +95,9 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
         } else {
           setProfile(profileData);
           switch (profileData.role) {
+            case 'admin':
+              navigate('/super-admin-dashboard'); // Redirect admin to their dashboard
+              break;
             case 'client_assigner':
               navigate('/client-assigner-dashboard');
               break;

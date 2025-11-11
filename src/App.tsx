@@ -17,6 +17,7 @@ import ManagerClientDetailViewPage from "./pages/ManagerClientDetailViewPage";
 import ClientAssignerDashboardPage from "./pages/ClientAssignerDashboardPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import LoginPage from "./pages/LoginPage";
+import SuperAdminDashboardPage from "./pages/SuperAdminDashboardPage"; // Import new page
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/manager/client/:clientId" element={<ManagerClientDetailViewPage />} />
             <Route path="/client-assigner-dashboard" element={<ClientAssignerDashboardPage />} />
             <Route path="/analytics-dashboard" element={<AnalyticsDashboardPage />} />
+            <Route path="/super-admin-dashboard" element={<SuperAdminDashboardPage />} /> {/* New Super Admin Dashboard route */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
