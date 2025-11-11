@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge"; // Added missing import for Badge
 import { showSuccess } from "@/utils/toast";
 import { mockManagers, Manager } from "@/data/mockData"; // Import from centralized mockData
 
