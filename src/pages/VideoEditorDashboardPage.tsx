@@ -21,6 +21,7 @@ import { Video } from "@/components/VideoTrackingCard"; // Import Video from Vid
 import { EditorVideoCard } from "@/components/EditorVideoCard";
 import { showSuccess, showError } from "@/utils/toast";
 import { parseISO, isBefore } from "date-fns";
+import { Navbar } from "@/components/Navbar"; // Import Navbar
 
 const VideoEditorDashboardPage = () => {
   const { user, isLoading: isSessionLoading, profile } = useSession();

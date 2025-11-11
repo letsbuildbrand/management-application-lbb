@@ -95,9 +95,10 @@ const ClientDashboardPage = () => {
           draft_link: project.draft_link || undefined,
           final_delivery_link: project.final_delivery_link || undefined,
           thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
-          updates: [], // This would typically be fetched from a separate 'project_updates' table
+          updates: [], // Initialize updates as an empty array
           satisfactionRating: undefined, // Same as above
           projectType: undefined, // Same as above
+          notes: [], // Initialize notes as an empty array
         }));
         setVideos(formattedVideos);
       }

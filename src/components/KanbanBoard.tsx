@@ -25,7 +25,7 @@ const getStatusBadgeVariant = (status: string) => {
     case "awaiting feedback":
     case "review":
     case "feedback":
-      return "primary";
+      return "default"; // Changed from "primary" to "default"
     case "pending":
     default:
       return "default";
@@ -56,7 +56,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos }) => {
               variant={getStatusBadgeVariant(column.id)}
               className={cn(
                 "text-sm font-medium",
-                (column.id === 'completed') && 'bg-success text-success-foreground'
+                (column.id === 'completed') && 'bg-success text-success-foreground',
+                (column.id === 'need-approval') && 'bg-primary text-primary-foreground' // Apply primary styling via className
               )}
             >
               {column.videos.length}

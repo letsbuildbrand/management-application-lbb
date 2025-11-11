@@ -95,7 +95,7 @@ const SuperAdminDashboardPage = () => {
             <p className="mt-2">New users will receive an email to verify their account and set their password.</p>
             <p className="mt-2 text-sm text-red-400">
               **Important:** For the `create-user` Edge Function to work, you need to set the `SUPABASE_SERVICE_ROLE_KEY` secret in your Supabase project.
-              Go to <a href="https://app.supabase.com/project/faywcisblbmuqdfauoej/functions/secrets" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Project -> Edge Functions -> Manage Secrets</a> and add `SUPABASE_SERVICE_ROLE_KEY` with your project's service role key.
+              Go to <a href="https://app.supabase.com/project/faywcisblbmuqdfauoej/functions/secrets" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Project -&gt; Edge Functions -&gt; Manage Secrets</a> and add `SUPABASE_SERVICE_ROLE_KEY` with your project's service role key.
             </p>
           </div>
         </div>

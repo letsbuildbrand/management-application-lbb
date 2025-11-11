@@ -84,7 +84,7 @@ const getStatusBadgeVariant = (status: string) => {
     case "review":
     case "feedback":
     case "need changes":
-      return "primary";
+      return "default"; // Changed from "primary" to "default"
     case "pending":
       return "outline";
     default:
@@ -148,7 +148,13 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, onU
           <div className="flex flex-col items-end space-y-2">
             <Badge
               variant={getStatusBadgeVariant(video.current_status)}
-              className={video.current_status.toLowerCase() === 'completed' || video.current_status.toLowerCase() === 'approved' ? 'bg-success text-success-foreground' : ''}
+              className={
+                video.current_status.toLowerCase() === 'completed' || video.current_status.toLowerCase() === 'approved'
+                  ? 'bg-success text-success-foreground'
+                  : (video.current_status.toLowerCase() === 'review' || video.current_status.toLowerCase() === 'awaiting feedback' || video.current_status.toLowerCase() === 'feedback' || video.current_status.toLowerCase() === 'need changes')
+                    ? 'bg-primary text-primary-foreground' // Apply primary styling via className
+                    : ''
+              }
             >
               {video.current_status}
             </Badge>
