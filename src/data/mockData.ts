@@ -61,8 +61,8 @@ export interface Client {
   joinDate?: string; // Date client joined
   lastActive?: string; // Last date client had an active project/interaction
   satisfactionRatings?: { month: string; rating: number }[]; // Monthly satisfaction ratings
-  // The 'videos' property will be fetched separately from the 'projects' table
-  // The 'activeProjects' and 'unassignedTasks' will be computed based on fetched videos
+  activeProjects?: number; // Computed property
+  unassignedTasks?: number; // Computed property
 }
 
 // We will no longer use mockClients directly, but fetch from Supabase

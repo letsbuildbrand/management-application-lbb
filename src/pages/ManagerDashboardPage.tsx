@@ -1,35 +1,107 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { ArrowRight, LayoutGrid, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { Video, Client, mockClients } from "@/data/mockData"; // Import Video, Client, mockClients from centralized mockData
+import { Client } from "@/data/mockData"; // Import Client interface
+import { supabase } from "@/integrations/supabase/client"; // Import supabase client
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 const ManagerDashboardPage = () => {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const { user, isLoading: isSessionLoading } = useSession();
+  const [clients, setClients] = useState<Client[]>([]);
   const [totalActiveProjects, setTotalActiveProjects] = useState(0);
   const [pendingAssignments, setPendingAssignments] = useState(0);
   const [projectsInReview, setProjectsInReview] = useState(0);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const fetchManagerData = useCallback(async () => {
+    if (!user) {
+      setIsLoadingData(false);
+      return;
+    }
+
+    setIsLoadingData(true);
+    try {
+      // Fetch clients assigned to this manager
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('assigned_manager_id', user.id);
+
+      if (clientsError) {
+        console.error("Error fetching clients for manager:", clientsError);
+        setClients([]);
+        return;
+      }
+
+      let activeProjectsCount = 0;
+      let pendingAssignmentsCount = 0;
+      let projectsInReviewCount = 0;
+
+      const clientsWithMetrics = await Promise.all(clientsData.map(async (client) => {
+        const { data: projectsData, error: projectsError } = await supabase
+          .from('projects')
+          .select('id, current_status, assigned_editor_id')
+          .eq('client_id', client.id);
+
+        if (projectsError) {
+          console.error(`Error fetching projects for client ${client.id}:`, projectsError);
+          return { ...client, activeProjects: 0, unassignedTasks: 0 };
+        }
+
+        const activeProjects = projectsData.filter(p => p.current_status !== 'Completed' && p.current_status !== 'Approved').length;
+        const unassignedTasks = projectsData.filter(p => p.current_status === 'Requested' && !p.assigned_editor_id).length;
+        const reviewProjects = projectsData.filter(p => p.current_status === 'Review' || p.current_status === 'Awaiting Feedback').length;
+
+        activeProjectsCount += activeProjects;
+        pendingAssignmentsCount += unassignedTasks;
+        projectsInReviewCount += reviewProjects;
+
+        return { ...client, activeProjects, unassignedTasks };
+      }));
+
+      setClients(clientsWithMetrics as Client[]);
+      setTotalActiveProjects(activeProjectsCount);
+      setPendingAssignments(pendingAssignmentsCount);
+      setProjectsInReview(projectsInReviewCount);
+
+    } catch (error) {
+      console.error("Unexpected error fetching manager dashboard data:", error);
+      showError("An unexpected error occurred.");
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    let activeProjectsCount = 0;
-    let pendingAssignmentsCount = 0;
-    let projectsInReviewCount = 0;
+    if (!isSessionLoading && user) {
+      fetchManagerData();
+    }
+  }, [isSessionLoading, user, fetchManagerData]);
 
-    clients.forEach(client => {
-      activeProjectsCount += client.videos.filter(video => video.currentStatus !== "Completed" && video.currentStatus !== "Approved").length;
-      pendingAssignmentsCount += client.videos.filter(video => video.currentStatus === "Requested" && !video.assignedEditorId).length;
-      projectsInReviewCount += client.videos.filter(video => video.currentStatus === "Review" || video.currentStatus === "Awaiting Feedback").length;
-    });
+  if (isSessionLoading || isLoadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <p>Loading manager dashboard...</p>
+      </div>
+    );
+  }
 
-    setTotalActiveProjects(activeProjectsCount);
-    setPendingAssignments(pendingAssignmentsCount);
-    setProjectsInReview(projectsInReviewCount);
-  }, [clients]);
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-8 mt-16">
+          <p className="text-xl text-muted-foreground">Please log in as a manager to view this dashboard.</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -73,31 +145,35 @@ const ManagerDashboardPage = () => {
           {/* Client List */}
           <div className="space-y-4 px-4">
             <h3 className="text-2xl font-semibold mb-4">Client Portfolio</h3>
-            {clients.map(client => (
-              <Card key={client.id} className="p-4 hover:shadow-lg transition-shadow duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <Link to={`/manager/client/${client.id}`} className="text-xl font-bold text-primary hover:underline">
-                      {client.name}
-                    </Link>
-                    <p className="text-sm text-muted-foreground">{client.status}</p>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="secondary">
-                      {client.activeProjects} Active Projects
-                    </Badge>
-                    {client.unassignedTasks > 0 && (
-                      <Badge variant="destructive">
-                        {client.unassignedTasks} Unassigned Tasks
+            {clients.length > 0 ? (
+              clients.map(client => (
+                <Card key={client.id} className="p-4 hover:shadow-lg transition-shadow duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <Link to={`/manager/client/${client.id}`} className="text-xl font-bold text-primary hover:underline">
+                        {client.name}
+                      </Link>
+                      <p className="text-sm text-muted-foreground">{client.status}</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Badge variant="secondary">
+                        {client.activeProjects} Active Projects
                       </Badge>
-                    )}
-                    <Link to={`/manager/client/${client.id}`}>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground hover:text-primary" />
-                    </Link>
+                      {client.unassignedTasks && client.unassignedTasks > 0 && (
+                        <Badge variant="destructive">
+                          {client.unassignedTasks} Unassigned Tasks
+                        </Badge>
+                      )}
+                      <Link to={`/manager/client/${client.id}`}>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground hover:text-primary" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No clients assigned to you yet.</p>
+            )}
           </div>
         </div>
       </main>
