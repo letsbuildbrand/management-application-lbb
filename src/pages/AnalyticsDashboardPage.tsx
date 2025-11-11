@@ -22,7 +22,7 @@ import {
 import { format, parseISO, getMonth, getYear, isBefore, isAfter, addMonths } from "date-fns";
 
 const AnalyticsDashboardPage = () => {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>(mockClients); // Using mockClients for now, will integrate Supabase later
   const [kpis, setKpis] = useState({
     totalDeliveries: 0,
     avgSatisfaction: 0,
@@ -50,6 +50,7 @@ const AnalyticsDashboardPage = () => {
       let ratedDeliveries = 0;
       let onTimeDeliveries = 0;
       let totalCompletedDeliveries = 0;
+      let totalDelayedDeliveries = 0;
 
       const now = new Date();
       const currentMonth = getMonth(now);
@@ -79,11 +80,12 @@ const AnalyticsDashboardPage = () => {
 
       clients.forEach((client) => {
         client.videos.forEach((video) => {
-          if (video.actualDeliveryDate) {
+          if (video.delivery_timestamp) { // Use delivery_timestamp for actual delivery
             totalDeliveries++;
             totalCompletedDeliveries++;
 
-            const actualDate = parseISO(video.actualDeliveryDate);
+            const actualDate = parseISO(video.delivery_timestamp);
+            const deadlineDate = parseISO(video.adjusted_deadline_timestamp || video.initial_deadline_timestamp);
             const deliveryMonth = getMonth(actualDate);
             const deliveryYear = getYear(actualDate);
             const monthKey = format(actualDate, "MMM yy");
@@ -93,16 +95,12 @@ const AnalyticsDashboardPage = () => {
             }
             monthlyDeliveryData[monthKey].delivered++;
 
-            if (video.deliveryDate) {
-              const expectedDate = parseISO(video.deliveryDate);
-              if (isBefore(actualDate, expectedDate) || actualDate.toDateString() === expectedDate.toDateString()) {
-                onTimeDeliveries++;
-                monthlyDeliveryData[monthKey].onTime++;
-              } else {
-                monthlyDeliveryData[monthKey].delayed++;
-              }
+            if (isBefore(actualDate, deadlineDate) || actualDate.toDateString() === deadlineDate.toDateString()) {
+              onTimeDeliveries++;
+              monthlyDeliveryData[monthKey].onTime++;
             } else {
-              // If no expected date, can't determine on-time/delayed, so just count as delivered
+              totalDelayedDeliveries++;
+              monthlyDeliveryData[monthKey].delayed++;
             }
 
             if (deliveryMonth === currentMonth && deliveryYear === currentYear) {
@@ -113,8 +111,9 @@ const AnalyticsDashboardPage = () => {
             }
           }
 
-          if (video.deliveryDate && video.currentStatus !== "Completed" && video.currentStatus !== "Approved") {
-            const expectedDate = parseISO(video.deliveryDate);
+          // Calculate expected deliveries for current and last month
+          if (video.current_status !== "Completed" && video.current_status !== "Approved") {
+            const expectedDate = parseISO(video.adjusted_deadline_timestamp || video.initial_deadline_timestamp);
             const expectedMonth = getMonth(expectedDate);
             const expectedYear = getYear(expectedDate);
 
@@ -132,7 +131,7 @@ const AnalyticsDashboardPage = () => {
           }
         });
 
-        client.satisfactionRatings.forEach((rating) => {
+        client.satisfactionRatings?.forEach((rating) => {
           if (!monthlySatisfactionData[rating.month]) {
             monthlySatisfactionData[rating.month] = { sum: 0, count: 0 };
           }
@@ -162,14 +161,14 @@ const AnalyticsDashboardPage = () => {
       const allMonths = new Set<string>();
       clients.forEach(client => {
         client.videos.forEach(video => {
-          if (video.actualDeliveryDate) {
-            allMonths.add(format(parseISO(video.actualDeliveryDate), "MMM yy"));
+          if (video.delivery_timestamp) {
+            allMonths.add(format(parseISO(video.delivery_timestamp), "MMM yy"));
           }
-          if (video.deliveryDate) {
-            allMonths.add(format(parseISO(video.deliveryDate), "MMM yy"));
+          if (video.adjusted_deadline_timestamp || video.initial_deadline_timestamp) {
+            allMonths.add(format(parseISO(video.adjusted_deadline_timestamp || video.initial_deadline_timestamp), "MMM yy"));
           }
         });
-        client.satisfactionRatings.forEach(rating => allMonths.add(rating.month));
+        client.satisfactionRatings?.forEach(rating => allMonths.add(rating.month));
       });
 
       // Add current and last month if not present
@@ -182,28 +181,29 @@ const AnalyticsDashboardPage = () => {
         return isBefore(dateA, dateB) ? -1 : 1;
       });
 
-      const formattedDeliveryData = sortedMonths.map((month) => ({
-        month,
-        delivered: monthlyDeliveryData[month]?.delivered || 0,
-        onTime: monthlyDeliveryData[month]?.onTime || 0,
-        delayed: monthlyDeliveryData[month]?.delayed || 0,
-        expected: monthlyDeliveryData[month]?.expected || 0, // This needs to be calculated more accurately
-      }));
-
-      // Recalculate expected deliveries for chart data
-      formattedDeliveryData.forEach(dataPoint => {
+      const formattedDeliveryData = sortedMonths.map((month) => {
         let monthExpected = 0;
         clients.forEach(client => {
           client.videos.forEach(video => {
-            if (video.deliveryDate && video.currentStatus !== "Completed" && video.currentStatus !== "Approved") {
-              const expectedMonthKey = format(parseISO(video.deliveryDate), "MMM yy");
-              if (expectedMonthKey === dataPoint.month) {
-                monthExpected++;
+            if (video.current_status !== "Completed" && video.current_status !== "Approved") {
+              const expectedDeadline = video.adjusted_deadline_timestamp || video.initial_deadline_timestamp;
+              if (expectedDeadline) {
+                const expectedMonthKey = format(parseISO(expectedDeadline), "MMM yy");
+                if (expectedMonthKey === month) {
+                  monthExpected++;
+                }
               }
             }
           });
         });
-        dataPoint.expected = monthExpected;
+
+        return {
+          month,
+          delivered: monthlyDeliveryData[month]?.delivered || 0,
+          onTime: monthlyDeliveryData[month]?.onTime || 0,
+          delayed: monthlyDeliveryData[month]?.delayed || 0,
+          expected: monthExpected,
+        };
       });
 
 
@@ -284,7 +284,7 @@ const AnalyticsDashboardPage = () => {
             />
             <AnalyticsCard
               title="Projects in Review"
-              value={mockClients.reduce((acc, client) => acc + client.videos.filter(v => v.currentStatus === "Review" || v.currentStatus === "Awaiting Feedback").length, 0)}
+              value={mockClients.reduce((acc, client) => acc + client.videos.filter(v => v.current_status === "Review" || v.current_status === "Awaiting Feedback").length, 0)}
               description="Awaiting client feedback"
               icon={<Hourglass className="h-5 w-5 text-orange-500" />}
             />

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
+import { NotificationsDropdown } from "@/components/NotificationsDropdown"; // Import NotificationsDropdown
 
 export function Navbar() {
   return (
@@ -12,6 +13,7 @@ export function Navbar() {
         <span className="text-2xl font-bold text-primary dark:text-logo-yellow">LBB Management</span>
       </Link>
       <div className="flex items-center space-x-4">
+        <NotificationsDropdown /> {/* Integrated NotificationsDropdown */}
         <ThemeToggle />
         <ProfileDropdown />
       </div>

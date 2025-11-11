@@ -14,6 +14,7 @@ import { ChevronDown, ChevronUp, MessageSquareText, PlusCircle, CheckCircle, Clo
 import { showSuccess, showError } from "@/utils/toast";
 import { LiveCountdown } from "@/components/LiveCountdown"; // Import LiveCountdown
 import { RequestChangesDialog } from "@/components/RequestChangesDialog"; // Import RequestChangesDialog
+import { ChatModal } from "@/components/ChatModal"; // Import ChatModal
 
 interface VideoUpdate {
   timestamp: string;
@@ -189,6 +190,15 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, sho
               </Button>
             </div>
           )}
+
+          {/* Chat Button */}
+          <div className="flex justify-end mb-4">
+            <ChatModal projectId={video.id} projectName={video.title}>
+              <Button variant="outline" size="sm">
+                <MessageSquareText className="h-4 w-4 mr-2" /> Open Chat
+              </Button>
+            </ChatModal>
+          </div>
 
           {/* Tracking Timeline */}
           <div className="space-y-4">
