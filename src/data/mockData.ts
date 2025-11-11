@@ -50,7 +50,7 @@ export interface Video {
 }
 
 export interface Client {
-  id: string;
+  id: string; // This will be the auth.users.id
   name: string;
   contact_email?: string;
   contact_phone?: string;
@@ -61,10 +61,8 @@ export interface Client {
   joinDate?: string; // Date client joined
   lastActive?: string; // Last date client had an active project/interaction
   satisfactionRatings?: { month: string; rating: number }[]; // Monthly satisfaction ratings
-  // These fields will be handled by Supabase auth and profiles table
-  // username?: string;
-  // password?: string;
-  // videos: Video[]; // Videos will be fetched separately
+  // The 'videos' property will be fetched separately from the 'projects' table
+  // The 'activeProjects' and 'unassignedTasks' will be computed based on fetched videos
 }
 
 // We will no longer use mockClients directly, but fetch from Supabase
@@ -84,7 +82,6 @@ export const mockClients: Client[] = [
       { month: "Sep 24", rating: 4.8 },
       { month: "Oct 24", rating: 4.2 },
     ],
-    // Videos will be fetched from the 'projects' table
   },
   {
     id: "client2",

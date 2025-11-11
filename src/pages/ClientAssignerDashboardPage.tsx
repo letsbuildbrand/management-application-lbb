@@ -1,44 +1,172 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, User, Briefcase, ArrowRight } from "lucide-react";
-import { Client, mockClients, mockManagers } from "@/data/mockData"; // Import Client and mockClients
+import { PlusCircle, User, Briefcase } from "lucide-react";
+import { Client, Manager } from "@/data/mockData"; // Import Client and Manager interfaces
 import { CreateClientDialog } from "@/components/CreateClientDialog";
 import { AssignManagerDialog } from "@/components/AssignManagerDialog";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client"; // Import supabase client
 
 const ClientAssignerDashboardPage = () => {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [managers, setManagers] = useState<Manager[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [isLoadingManagers, setIsLoadingManagers] = useState(true);
 
-  const handleCreateClient = (newClientData: Omit<Client, 'id' | 'activeProjects' | 'unassignedTasks' | 'status' | 'videos'>) => {
-    const newClient: Client = {
-      id: `client${clients.length + 1}`,
-      name: newClientData.name,
-      username: newClientData.username,
-      password: newClientData.password,
-      activeProjects: 0,
-      unassignedTasks: 0,
-      status: "Active",
-      videos: [],
-      assignedManagerId: undefined, // Initially unassigned
-    };
-    setClients(prevClients => [...prevClients, newClient]);
-    showSuccess(`New client "${newClient.name}" added.`);
+  const fetchClients = useCallback(async () => {
+    setIsLoadingClients(true);
+    const { data: clientsData, error: clientsError } = await supabase
+      .from('clients')
+      .select('*');
+
+    if (clientsError) {
+      console.error("Error fetching clients:", clientsError);
+      showError("Failed to load clients.");
+      setClients([]);
+    } else {
+      // Fetch projects for each client to calculate activeProjects and unassignedTasks
+      const clientsWithMetrics = await Promise.all(clientsData.map(async (client) => {
+        const { data: projectsData, error: projectsError } = await supabase
+          .from('projects')
+          .select('id, current_status, assigned_editor_id')
+          .eq('client_id', client.id);
+
+        if (projectsError) {
+          console.error(`Error fetching projects for client ${client.id}:`, projectsError);
+          return { ...client, activeProjects: 0, unassignedTasks: 0 };
+        }
+
+        const activeProjects = projectsData.filter(p => p.current_status !== 'Completed' && p.current_status !== 'Approved').length;
+        const unassignedTasks = projectsData.filter(p => p.current_status === 'Requested' && !p.assigned_editor_id).length;
+
+        return { ...client, activeProjects, unassignedTasks };
+      }));
+      setClients(clientsWithMetrics as Client[]);
+    }
+    setIsLoadingClients(false);
+  }, []);
+
+  const fetchManagers = useCallback(async () => {
+    setIsLoadingManagers(true);
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, avatar_url, role')
+      .eq('role', 'manager');
+
+    if (profilesError) {
+      console.error("Error fetching managers' profiles:", profilesError);
+      showError("Failed to load managers' profiles.");
+      setManagers([]);
+    } else {
+      const managersWithLoad = await Promise.all(profilesData.map(async (profile) => {
+        const { count, error: countError } = await supabase
+          .from('clients')
+          .select('id', { count: 'exact' })
+          .eq('assigned_manager_id', profile.id);
+
+        if (countError) {
+          console.error(`Error counting clients for manager ${profile.id}:`, countError);
+          return {
+            id: profile.id,
+            name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
+            avatar: profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.first_name}`,
+            clientLoad: 0,
+          };
+        }
+
+        return {
+          id: profile.id,
+          name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
+          avatar: profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.first_name}`,
+          clientLoad: count || 0,
+        };
+      }));
+      setManagers(managersWithLoad);
+    }
+    setIsLoadingManagers(false);
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+    fetchManagers();
+  }, [fetchClients, fetchManagers]);
+
+  const handleCreateClient = async ({ name, email, password }: { name: string; email: string; password: string }) => {
+    try {
+      // 1. Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: name,
+            role: 'client', // This will be used by the handle_new_user trigger
+          },
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error("User not created during signup.");
+      }
+
+      // The handle_new_user trigger should automatically create the profile.
+      // 2. Insert into clients table (using the new auth user's ID)
+      const { error: clientInsertError } = await supabase
+        .from('clients')
+        .insert({
+          id: authData.user.id,
+          name: name,
+          contact_email: email,
+          monthly_credits: 0, // Default values
+          credits_remaining: 0,
+          status: 'Active',
+        });
+
+      if (clientInsertError) {
+        // If client insertion fails, consider rolling back auth user creation (advanced)
+        throw clientInsertError;
+      }
+
+      showSuccess(`Client "${name}" created successfully! An email has been sent to ${email} for verification.`);
+      fetchClients(); // Refresh client list
+      fetchManagers(); // Refresh manager client loads
+    } catch (error: any) {
+      console.error("Error creating client:", error.message);
+      showError(`Failed to create client: ${error.message}`);
+      throw error; // Re-throw to be caught by the dialog's error handling
+    }
   };
 
-  const handleAssignManager = (clientId: string, managerId: string) => {
-    setClients(prevClients =>
-      prevClients.map(client =>
-        client.id === clientId ? { ...client, assignedManagerId: managerId } : client
-      )
-    );
-    const managerName = mockManagers.find(m => m.id === managerId)?.name || "an unknown manager";
-    showSuccess(`Client assigned to ${managerName}.`);
+  const handleAssignManager = async (clientId: string, managerId: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ assigned_manager_id: managerId })
+        .eq('id', clientId);
+
+      if (error) {
+        throw error;
+      }
+
+      const managerName = managers.find(m => m.id === managerId)?.name || "an unknown manager";
+      showSuccess(`Client assigned to ${managerName}.`);
+      fetchClients(); // Refresh client list to update manager assignments
+      fetchManagers(); // Refresh manager client loads
+    } catch (error: any) {
+      console.error("Error assigning manager:", error.message);
+      showError(`Failed to assign manager: ${error.message}`);
+      throw error;
+    }
   };
 
   return (
@@ -67,10 +195,12 @@ const ClientAssignerDashboardPage = () => {
           {/* Client List */}
           <div className="space-y-4 px-4">
             <h3 className="text-2xl font-semibold mb-4">Active Clients</h3>
-            {clients.length > 0 ? (
+            {isLoadingClients ? (
+              <p className="text-center text-muted-foreground py-8">Loading clients...</p>
+            ) : clients.length > 0 ? (
               clients.map(client => {
-                const assignedManager = client.assignedManagerId
-                  ? mockManagers.find(m => m.id === client.assignedManagerId)
+                const assignedManager = client.assigned_manager_id
+                  ? managers.find(m => m.id === client.assigned_manager_id)
                   : undefined;
                 return (
                   <Card key={client.id} className="p-4 hover:shadow-lg transition-shadow duration-200">
@@ -90,11 +220,12 @@ const ClientAssignerDashboardPage = () => {
                           <Badge variant="destructive">Unassigned Manager</Badge>
                         )}
                         <AssignManagerDialog
-                          currentManagerId={client.assignedManagerId}
-                          onAssign={(managerId) => handleAssignManager(client.id, managerId)}
+                          clientId={client.id}
+                          currentManagerId={client.assigned_manager_id}
+                          onAssign={handleAssignManager}
                         >
                           <Button variant="outline" size="sm">
-                            <Briefcase className="h-4 w-4 mr-2" /> {client.assignedManagerId ? "Reassign Manager" : "Assign Manager"}
+                            <Briefcase className="h-4 w-4 mr-2" /> {client.assigned_manager_id ? "Reassign Manager" : "Assign Manager"}
                           </Button>
                         </AssignManagerDialog>
                       </div>
