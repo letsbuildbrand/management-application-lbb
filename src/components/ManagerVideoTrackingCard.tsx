@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AssignEditorDialog, Editor, mockEditors } from "@/components/AssignEditorDialog";
+import { AssignEditorDialog } from "@/components/AssignEditorDialog";
+import { mockEditors } from "@/data/mockData"; // Import mockEditors from centralized mockData
 import { MoreVertical, User, Edit, CheckCircle, Loader, AlertCircle, Clock } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 

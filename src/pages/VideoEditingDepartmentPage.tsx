@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
-import { User, Briefcase, MonitorPlay, Users, Crown } from "lucide-react"; // Added Crown icon for Manager
+import { User, Briefcase, MonitorPlay, Users, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ParticleCard, BentoCardGrid, GlobalSpotlight, useMobileDetection } from "@/components/MagicBento";
 
@@ -26,8 +26,8 @@ const VideoEditingDepartmentPage = () => {
     {
       title: "Manager",
       description: "Oversee clients and manage project assignments.",
-      icon: <Crown className="h-8 w-8" />, // Using Crown icon for Manager
-      onClick: () => navigate('/manager-dashboard') // Navigate to the new Manager Dashboard
+      icon: <Crown className="h-8 w-8" />,
+      onClick: () => navigate('/manager-dashboard')
     },
     {
       title: "Client",
@@ -37,9 +37,9 @@ const VideoEditingDepartmentPage = () => {
     },
     {
       title: "Client Assigner",
-      description: "Assign clients to specific video editors.",
+      description: "Assign clients to specific managers and create new client accounts.",
       icon: <Users className="h-8 w-8" />,
-      onClick: () => { /* navigate('/client-assigner-dashboard') */ alert("Client Assigner dashboard coming soon!"); }
+      onClick: () => navigate('/client-assigner-dashboard') // Navigate to the new Client Assigner Dashboard
     },
   ];
 

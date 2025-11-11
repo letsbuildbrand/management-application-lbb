@@ -11,8 +11,9 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import VideoEditingDepartmentPage from "./pages/VideoEditingDepartmentPage";
 import VideoEditorDashboardPage from "./pages/VideoEditorDashboardPage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
-import ManagerDashboardPage from "./pages/ManagerDashboardPage"; // New import
-import ManagerClientDetailViewPage from "./pages/ManagerClientDetailViewPage"; // New import
+import ManagerDashboardPage from "./pages/ManagerDashboardPage";
+import ManagerClientDetailViewPage from "./pages/ManagerClientDetailViewPage";
+import ClientAssignerDashboardPage from "./pages/ClientAssignerDashboardPage"; // New import
 
 const queryClient = new QueryClient();
 
@@ -30,8 +31,9 @@ const App = () => (
           <Route path="/departments/video-editing" element={<VideoEditingDepartmentPage />} />
           <Route path="/video-editing-dashboard" element={<VideoEditorDashboardPage />} />
           <Route path="/client-dashboard" element={<ClientDashboardPage />} />
-          <Route path="/manager-dashboard" element={<ManagerDashboardPage />} /> {/* New route */}
-          <Route path="/manager/client/:clientId" element={<ManagerClientDetailViewPage />} /> {/* New route */}
+          <Route path="/manager-dashboard" element={<ManagerDashboardPage />} />
+          <Route path="/manager/client/:clientId" element={<ManagerClientDetailViewPage />} />
+          <Route path="/client-assigner-dashboard" element={<ClientAssignerDashboardPage />} /> {/* New route */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
