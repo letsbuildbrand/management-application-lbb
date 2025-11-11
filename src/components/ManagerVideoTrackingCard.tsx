@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { VideoTrackingCard, Video } from "@/components/VideoTrackingCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AssignEditorDialog } from "@/components/AssignEditorDialog";
 import { ChangeDeadlineDialog } from "@/components/ChangeDeadlineDialog"; // Import ChangeDeadlineDialog
-import { mockEditors } from "@/data/mockData"; // Import mockEditors from centralized mockData
 import { MoreVertical, User, Edit, CheckCircle, Loader, AlertCircle, Clock, CalendarDays } from "lucide-react"; // Added CalendarDays icon
 import { showSuccess } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client"; // Import supabase client
 
 interface ManagerVideoTrackingCardProps {
   video: Video;
@@ -73,11 +73,35 @@ const getStatusIcon = (status: string) => {
 };
 
 export const ManagerVideoTrackingCard: React.FC<ManagerVideoTrackingCardProps> = ({ video, onUpdateVideo }) => {
-  const assignedEditor = video.assigned_editor_id ? mockEditors.find(e => e.id === video.assigned_editor_id) : undefined;
+  const [assignedEditorName, setAssignedEditorName] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const fetchEditorName = async () => {
+      if (video.assigned_editor_id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', video.assigned_editor_id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching editor name:", error);
+          setAssignedEditorName("Unknown Editor");
+        } else if (data) {
+          setAssignedEditorName(`${data.first_name} ${data.last_name || ''}`.trim());
+        }
+      } else {
+        setAssignedEditorName(undefined);
+      }
+    };
+
+    fetchEditorName();
+  }, [video.assigned_editor_id]);
 
   const handleAssignEditor = async (projectId: string, editorId: string) => {
     await onUpdateVideo(projectId, { assigned_editor_id: editorId, current_status: "Assigned" });
-    showSuccess(`Project ${video.title} assigned to ${mockEditors.find(e => e.id === editorId)?.name || 'an editor'}.`);
+    const editorProfile = await supabase.from('profiles').select('first_name, last_name').eq('id', editorId).single();
+    showSuccess(`Project ${video.title} assigned to ${editorProfile.data?.first_name || 'an editor'}.`);
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -125,7 +149,7 @@ export const ManagerVideoTrackingCard: React.FC<ManagerVideoTrackingCardProps> =
           <>
             <div className="flex items-center space-x-1 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
-              <span>{assignedEditor?.name || "Unassigned"}</span>
+              <span>{assignedEditorName || "Unassigned"}</span>
             </div>
             <AssignEditorDialog projectId={video.id} currentEditorId={video.assigned_editor_id} onAssign={handleAssignEditor}>
               <Button variant="outline" size="sm" className="h-8">

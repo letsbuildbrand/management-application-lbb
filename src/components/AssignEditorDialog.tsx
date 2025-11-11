@@ -40,7 +40,7 @@ export const AssignEditorDialog: React.FC<AssignEditorDialogProps> = ({ children
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url, role')
-        .eq('role', 'editor');
+        .eq('role', 'editor'); // Filter for profiles with role 'editor'
 
       if (profilesError) {
         console.error("Error fetching editors:", profilesError);

@@ -5,13 +5,6 @@ export interface Editor {
   workload: number; // Number of active projects
 }
 
-export const mockEditors: Editor[] = [
-  { id: "editor1", name: "Alice Johnson", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Alice", workload: 2 },
-  { id: "editor2", name: "Bob Smith", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Bob", workload: 1 },
-  { id: "editor3", name: "Charlie Brown", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Charlie", workload: 3 },
-  { id: "editor4", name: "Diana Prince", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Diana", workload: 0 },
-];
-
 export interface Manager {
   id: string; // This will be the profile_id from Supabase
   name: string;
@@ -19,16 +12,10 @@ export interface Manager {
   clientLoad: number; // Number of clients managed
 }
 
-export const mockManagers: Manager[] = [
-  { id: "manager1", name: "John Doe", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=John", clientLoad: 2 },
-  { id: "manager2", name: "Jane Smith", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Jane", clientLoad: 1 },
-  { id: "manager3", name: "Peter Jones", avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Peter", clientLoad: 0 },
-];
-
 export interface Video {
   id: string;
-  client_id: string; // Foreign key to clients table
-  assigned_editor_id?: string; // Foreign key to editors table (profile_id)
+  client_id: string; // Foreign key to profiles table (client role)
+  assigned_editor_id?: string; // Foreign key to profiles table (editor role)
   title: string;
   description?: string;
   raw_files_link?: string;
@@ -49,82 +36,23 @@ export interface Video {
   projectType?: string; // e.g., "Ad", "Explainer", "Social Media"
 }
 
-export interface Client {
+export interface Client { // This now represents a profile with a 'client' role
   id: string; // This will be the auth.users.id
-  name: string;
-  contact_email?: string;
-  contact_phone?: string;
-  monthly_credits: number;
-  credits_remaining: number;
-  status: "Active" | "On Hold" | "Archived";
-  assigned_manager_id?: string; // Foreign key to managers table (profile_id)
+  name: string; // Combined first_name and last_name
+  contact_email?: string; // From profiles.email
+  contact_phone?: string; // From profiles.contact_phone
+  monthly_credits: number; // From profiles.monthly_credits
+  credits_remaining: number; // From profiles.credits_remaining
+  status: "Active" | "On Hold" | "Archived"; // From profiles.status
+  assigned_manager_id?: string; // Foreign key to profiles table (manager role)
   joinDate?: string; // Date client joined
   lastActive?: string; // Last date client had an active project/interaction
-  satisfactionRatings?: { month: string; rating: number }[]; // Monthly satisfaction ratings
+  satisfactionRatings?: { month: string; rating: number }[]; // Monthly satisfaction ratings (might be fetched from another table or computed)
   activeProjects?: number; // Computed property
   unassignedTasks?: number; // Computed property
 }
 
-// We will no longer use mockClients directly, but fetch from Supabase
-export const mockClients: Client[] = [
-  {
-    id: "client1",
-    name: "Nexus Corp",
-    monthly_credits: 10,
-    credits_remaining: 7,
-    status: "Active",
-    assigned_manager_id: "manager1",
-    joinDate: "2023-01-15",
-    lastActive: "2024-10-25",
-    satisfactionRatings: [
-      { month: "Jul 24", rating: 4.5 },
-      { month: "Aug 24", rating: 4.0 },
-      { month: "Sep 24", rating: 4.8 },
-      { month: "Oct 24", rating: 4.2 },
-    ],
-  },
-  {
-    id: "client2",
-    name: "Innovate Inc.",
-    monthly_credits: 5,
-    credits_remaining: 3,
-    status: "Active",
-    assigned_manager_id: "manager1",
-    joinDate: "2023-03-01",
-    lastActive: "2024-10-20",
-    satisfactionRatings: [
-      { month: "Jul 24", rating: 3.8 },
-      { month: "Aug 24", rating: 4.2 },
-      { month: "Sep 24", rating: 4.5 },
-      { month: "Oct 24", rating: 4.0 },
-    ],
-  },
-  {
-    id: "client3",
-    name: "Global Solutions",
-    monthly_credits: 3,
-    credits_remaining: 0,
-    status: "On Hold",
-    assigned_manager_id: "manager2",
-    joinDate: "2022-11-01",
-    lastActive: "2024-08-15",
-    satisfactionRatings: [
-      { month: "Jul 24", rating: 4.0 },
-      { month: "Aug 24", rating: 3.5 },
-    ],
-  },
-  {
-    id: "client4",
-    name: "QuantumLeap Solutions",
-    monthly_credits: 0,
-    credits_remaining: 0,
-    status: "Archived",
-    assigned_manager_id: "manager3",
-    joinDate: "2022-05-10",
-    lastActive: "2023-12-01",
-    satisfactionRatings: [
-      { month: "Nov 23", rating: 4.0 },
-      { month: "Dec 23", rating: 4.5 },
-    ],
-  },
-];
+// We will no longer use mockClients, mockEditors, or mockManagers directly, but fetch from Supabase profiles table
+// The structure of mockClients is kept for type compatibility in components that still expect it,
+// but the data itself will come from Supabase.
+export const mockClients: Client[] = []; // Empty array as data will be fetched
