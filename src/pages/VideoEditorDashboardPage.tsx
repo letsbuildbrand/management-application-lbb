@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,19 +12,131 @@ import {
   Users,
   Settings,
   HelpCircle,
-  Bell,
-  CheckCircle2,
-  AlertTriangle,
-  Menu as MenuIcon, // Renamed to avoid conflict with react-pro-sidebar's Menu
+  Menu as MenuIcon,
 } from "lucide-react";
-import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar'; // Import react-pro-sidebar components
+import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
+import { useSession } from "@/components/SessionContextProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { Video } from "@/data/mockData";
+import { EditorVideoCard } from "@/components/EditorVideoCard"; // Import EditorVideoCard
+import { showSuccess, showError } from "@/utils/toast";
+import { parseISO, isBefore } from "date-fns"; // For sorting
 
 const VideoEditorDashboardPage = () => {
+  const { user, isLoading: isSessionLoading, profile } = useSession();
   const [collapsed, setCollapsed] = useState(false);
+  const [assignedVideos, setAssignedVideos] = useState<Video[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(true);
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
+
+  const fetchAssignedVideos = useCallback(async () => {
+    if (!user) {
+      setIsLoadingVideos(false);
+      return;
+    }
+
+    setIsLoadingVideos(true);
+    try {
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('assigned_editor_id', user.id)
+        .neq('current_status', 'Completed') // Exclude completed projects from active view
+        .neq('current_status', 'Approved'); // Exclude approved projects from active view
+
+      if (projectsError) {
+        console.error("Error fetching assigned projects:", projectsError);
+        showError("Failed to load your assigned projects.");
+        setAssignedVideos([]);
+        return;
+      }
+
+      const formattedVideos: Video[] = projectsData.map(project => ({
+        id: project.id,
+        client_id: project.client_id,
+        assignedEditorId: project.assigned_editor_id || undefined,
+        title: project.title,
+        description: project.description || '',
+        raw_files_link: project.raw_files_link || undefined,
+        instructions_link: project.instructions_link || undefined,
+        currentStatus: project.current_status,
+        credits_cost: project.credits_cost,
+        priority: project.priority,
+        submission_timestamp: project.submission_timestamp,
+        initial_deadline_timestamp: project.initial_deadline_timestamp,
+        adjusted_deadline_timestamp: project.adjusted_deadline_timestamp || undefined,
+        delivery_timestamp: project.delivery_timestamp || undefined,
+        draft_link: project.draft_link || undefined,
+        final_delivery_link: project.final_delivery_link || undefined,
+        thumbnailUrl: project.thumbnailUrl || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
+        updates: [], // Assuming updates are fetched separately or managed by backend
+        notes: [], // Assuming notes are fetched separately or managed by backend
+        internalNotes: [], // Assuming internal notes are fetched separately or managed by backend
+        satisfactionRating: undefined, // Assuming satisfaction rating is fetched separately
+        projectType: undefined, // Assuming project type is fetched separately
+      }));
+
+      // Sort by deadline (adjusted_deadline_timestamp first, then initial_deadline_timestamp)
+      formattedVideos.sort((a, b) => {
+        const deadlineA = parseISO(a.adjusted_deadline_timestamp || a.initial_deadline_timestamp);
+        const deadlineB = parseISO(b.adjusted_deadline_timestamp || b.initial_deadline_timestamp);
+        return isBefore(deadlineA, deadlineB) ? -1 : 1;
+      });
+
+      setAssignedVideos(formattedVideos);
+    } catch (error) {
+      console.error("Unexpected error fetching editor dashboard data:", error);
+      showError("An unexpected error occurred.");
+    } finally {
+      setIsLoadingVideos(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!isSessionLoading && user) {
+      fetchAssignedVideos();
+    }
+  }, [isSessionLoading, user, fetchAssignedVideos]);
+
+  const handleUpdateVideo = async (videoId: string, updates: Partial<Video>) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', videoId);
+
+      if (error) {
+        throw error;
+      }
+      showSuccess("Project updated successfully!");
+      fetchAssignedVideos(); // Re-fetch to ensure UI is up-to-date
+    } catch (error: any) {
+      console.error("Error updating video:", error.message);
+      showError(`Failed to update project: ${error.message}`);
+    }
+  };
+
+  if (isSessionLoading || isLoadingVideos) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <p>Loading editor dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!user || profile?.role !== 'editor') {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-8 mt-16">
+          <p className="text-xl text-muted-foreground">Access Denied: You must be logged in as an editor to view this page.</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -32,11 +146,11 @@ const VideoEditorDashboardPage = () => {
         width="256px"
         collapsedWidth="80px"
         rootStyles={{
-          backgroundColor: 'hsl(var(--sidebar-DEFAULT))',
+          backgroundColor: 'hsl(var(--sidebar-background))',
           color: 'hsl(var(--sidebar-foreground))',
           borderRight: '1px solid hsl(var(--border))',
           transition: 'width 0.3s ease-in-out',
-          flexShrink: 0, // Prevent sidebar from shrinking
+          flexShrink: 0,
         }}
         className="h-screen"
       >
@@ -46,14 +160,14 @@ const VideoEditorDashboardPage = () => {
               <>
                 <Avatar className="h-10 w-10">
                   <AvatarImage
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_s5y2ZtGyGGSskVMSsw_H6jcxMOQFEmR67ohyClIOqzEbZcXulmI25oBi5Kd_B7dRuFgbkoYUU-nyNi4QEVvVtXqiCizcRE-hT-344Y-HZ3N1jgTxzLcYWs-G6Y0fPl1u5DBNc-otBTdvZk9oW8NKe5ljJ2pI-HhEn65QkQpYJf2L7znT_soB4ksZ_gsC3PjFnn-kfkUuv2agH6IR5hyXp0VhcwukL45ORp3oUrNZZ1gkGx6GxNcwmGXMBWvCY-tEbSTKAsBZAeCB"
-                    alt="User avatar for Alex Ray"
+                    src={profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.first_name || 'Editor'}`}
+                    alt={`User avatar for ${profile?.first_name || 'Editor'}`}
                   />
-                  <AvatarFallback>AR</AvatarFallback>
+                  <AvatarFallback>{profile?.first_name?.[0] || 'E'}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
                   <h1 className="text-base font-medium leading-normal text-sidebar-foreground">
-                    Alex Ray
+                    {profile?.first_name || 'Editor'} {profile?.last_name || ''}
                   </h1>
                   <p className="text-sm font-normal leading-normal text-muted-foreground">
                     Video Editor
@@ -113,232 +227,24 @@ const VideoEditorDashboardPage = () => {
         <div className="p-8">
           {/* PageHeading */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-4 min-w-72">
-              <div className="flex flex-col">
-                <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
-                  Project Dashboard
-                </h1>
-                <p className="mt-1 text-base font-normal leading-normal text-muted-foreground">
-                  Manage your video editing workflow.
-                </p>
-              </div>
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-black leading-tight tracking-[-0.033em] text-foreground">
+                My Assigned Projects
+              </h1>
+              <p className="mt-1 text-base font-normal leading-normal text-muted-foreground">
+                Your current video editing tasks, prioritized by deadline.
+              </p>
             </div>
           </div>
-          {/* Kanban Board */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {/* Column: To-Do */}
-            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">
-                  To-Do / Assigned to Me
-                </h2>
-                <span className="text-sm font-medium text-muted-foreground">
-                  3
-                </span>
-              </div>
-              {/* Card 1 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-destructive/20 text-destructive">
-                    High Priority
-                  </Badge>
-                  <Bell className="h-4 w-4 text-destructive" />
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Q3 Brand Campaign Ad
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Nexus Corp
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Oct 28
-                </p>
-              </div>
-              {/* Card 2 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-accent/20 text-accent">
-                    Medium Priority
-                  </Badge>
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Product Launch Video
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Innovate Inc.
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Nov 05
-                </p>
-              </div>
-              {/* Card 3 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-success/20 text-success">
-                    Low Priority
-                  </Badge>
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Social Media Snippets
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  QuantumLeap
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Nov 12
-                </p>
-              </div>
-            </div>
-            {/* Column: In Progress */}
-            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">
-                  In Progress
-                </h2>
-                <span className="text-sm font-medium text-muted-foreground">
-                  2
-                </span>
-              </div>
-              {/* Card 4 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-destructive/20 text-destructive">
-                    High Priority
-                  </Badge>
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Internal Training Series
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Stellar Solutions
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Oct 30
-                </p>
-              </div>
-              {/* Card 5 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-success/20 text-success">
-                    Low Priority
-                  </Badge>
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  YouTube Channel Intro
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Creator Hub
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Nov 08
-                </p>
-              </div>
-            </div>
-            {/* Column: Under Review */}
-            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">
-                  Under Review
-                </h2>
-                <span className="text-sm font-medium text-muted-foreground">
-                  1
-                </span>
-              </div>
-              {/* Card 6 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-accent/20 text-accent">
-                    Medium Priority
-                  </Badge>
-                  <Bell className="h-4 w-4 text-destructive" />
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  "About Us" Company Video
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Apex Dynamics
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Oct 25
-                </p>
-              </div>
-            </div>
-            {/* New Column: Need changes */}
-            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">
-                  Need changes
-                </h2>
-                <span className="text-sm font-medium text-muted-foreground">
-                  1
-                </span>
-              </div>
-              {/* Card 7 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-destructive/20 text-destructive">
-                    Urgent
-                  </Badge>
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Client Feedback Integration
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Global Solutions
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Due: Oct 26
-                </p>
-              </div>
-            </div>
-            {/* New Column: Completed */}
-            <div className="flex flex-col bg-card rounded-xl p-4 space-y-4 h-fit">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">
-                  Completed
-                </h2>
-                <span className="text-sm font-medium text-muted-foreground">
-                  2
-                </span>
-              </div>
-              {/* Card 8 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-success/20 text-success">
-                    Finished
-                  </Badge>
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Marketing Explainer Video
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Innovate Inc.
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Completed: Oct 20
-                </p>
-              </div>
-              {/* Card 9 */}
-              <div className="bg-popover p-4 rounded-lg border border-transparent hover:border-primary/50 cursor-grab">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline" className="bg-success/20 text-success">
-                    Finished
-                  </Badge>
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                </div>
-                <p className="text-lg font-bold leading-tight tracking-[-0.015em] text-foreground">
-                  Company Holiday Greeting
-                </p>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  Internal
-                </p>
-                <p className="mt-3 text-sm font-normal text-muted-foreground">
-                  Completed: Oct 18
-                </p>
-              </div>
-            </div>
+          {/* Assigned Projects List */}
+          <div className="space-y-6">
+            {assignedVideos.length > 0 ? (
+              assignedVideos.map((video) => (
+                <EditorVideoCard key={video.id} video={video} onUpdateVideo={handleUpdateVideo} />
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No projects currently assigned to you.</p>
+            )}
           </div>
         </div>
       </main>
