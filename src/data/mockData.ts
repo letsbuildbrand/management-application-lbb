@@ -35,6 +35,10 @@ export interface Video {
   notes: string[];
   assignedEditorId?: string;
   internalNotes?: string[];
+  deliveryDate?: string; // Expected delivery date
+  actualDeliveryDate?: string; // Actual delivery date
+  satisfactionRating?: number; // 1-5 rating from client
+  projectType?: string; // e.g., "Ad", "Explainer", "Social Media"
 }
 
 export interface Client {
@@ -47,6 +51,9 @@ export interface Client {
   assignedManagerId?: string; // New: ID of the assigned manager
   username?: string; // For prototype client accounts
   password?: string; // For prototype client accounts
+  joinDate: string; // Date client joined
+  lastActive: string; // Last date client had an active project/interaction
+  satisfactionRatings: { month: string; rating: number }[]; // Monthly satisfaction ratings
 }
 
 export const mockClients: Client[] = [
@@ -59,6 +66,14 @@ export const mockClients: Client[] = [
     assignedManagerId: "manager1",
     username: "nexus_user",
     password: "password123",
+    joinDate: "2023-01-15",
+    lastActive: "2024-10-25",
+    satisfactionRatings: [
+      { month: "Jul 24", rating: 4.5 },
+      { month: "Aug 24", rating: 4.0 },
+      { month: "Sep 24", rating: 4.8 },
+      { month: "Oct 24", rating: 4.2 },
+    ],
     videos: [
       {
         id: "v1",
@@ -71,6 +86,8 @@ export const mockClients: Client[] = [
         ],
         notes: ["Please ensure the new logo is prominently featured."],
         internalNotes: ["New request, needs assignment."],
+        deliveryDate: "2024-11-10",
+        projectType: "Ad",
       },
       {
         id: "v2",
@@ -85,6 +102,8 @@ export const mockClients: Client[] = [
         notes: [],
         assignedEditorId: "editor2",
         internalNotes: ["Waiting for client assets."],
+        deliveryDate: "2024-11-05",
+        projectType: "Explainer",
       },
       {
         id: "v3",
@@ -99,6 +118,8 @@ export const mockClients: Client[] = [
         notes: ["Looks good, just need to adjust the music volume in the intro."],
         assignedEditorId: "editor1",
         internalNotes: ["Follow up with client for feedback by EOD."],
+        deliveryDate: "2024-10-28",
+        projectType: "Social Media",
       },
     ],
   },
@@ -111,6 +132,14 @@ export const mockClients: Client[] = [
     assignedManagerId: "manager1",
     username: "innovate_user",
     password: "password123",
+    joinDate: "2023-03-01",
+    lastActive: "2024-10-20",
+    satisfactionRatings: [
+      { month: "Jul 24", rating: 3.8 },
+      { month: "Aug 24", rating: 4.2 },
+      { month: "Sep 24", rating: 4.5 },
+      { month: "Oct 24", rating: 4.0 },
+    ],
     videos: [
       {
         id: "v4",
@@ -121,10 +150,16 @@ export const mockClients: Client[] = [
         updates: [
           { timestamp: "2024-09-20 09:00 AM", message: "Project started.", status: "pending" },
           { timestamp: "2024-09-25 02:00 PM", message: "All videos filmed.", status: "in-progress" },
+          { timestamp: "2024-09-30 11:00 AM", message: "Final edits approved.", status: "completed" },
+          { timestamp: "2024-10-01 10:00 AM", message: "Project delivered.", status: "completed" },
         ],
         notes: [],
         assignedEditorId: "editor3",
         internalNotes: ["Archived project."],
+        deliveryDate: "2024-10-01",
+        actualDeliveryDate: "2024-10-01",
+        satisfactionRating: 5,
+        projectType: "Overview",
       },
       {
         id: "v5",
@@ -139,6 +174,8 @@ export const mockClients: Client[] = [
         notes: ["Ensure smooth transitions between testimonials."],
         assignedEditorId: "editor1",
         internalNotes: ["Editor needs to focus on this next week."],
+        deliveryDate: "2024-11-15",
+        projectType: "Testimonial",
       },
     ],
   },
@@ -151,12 +188,18 @@ export const mockClients: Client[] = [
     assignedManagerId: "manager2",
     username: "global_user",
     password: "password123",
+    joinDate: "2022-11-01",
+    lastActive: "2024-08-15",
+    satisfactionRatings: [
+      { month: "Jul 24", rating: 4.0 },
+      { month: "Aug 24", rating: 3.5 },
+    ],
     videos: [
       {
         id: "v6",
         title: "Company Culture Video",
         description: "Video showcasing the company culture.",
-        thumbnailUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDQLYpvdAgFBgCiOcVMz0nJh1R9h9CcJNxbUjmIlagIAAI6nc6hTv1g6TTXceuaedf8v0YCVulbYTeff5FiifpfKioG5oYniwUBUm6XzJ-7aycTduSeV62nvTtOQklTo3TkQDdLF2_tmzfbawDL5u8WduugiKip3BXRBrGJgCRDVX4Z59layIh3GdOLt8OJCBwvv04bUBlbshSLtmgYOJwwxKt6adPp_OdVZskgNSV7j8AMy5iDvB-IMFopD_OPL4shGC02cE4Zu41p",
+        thumbnailUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDQLYpvdAgFBgCiOcVMz0nJh1R9h9CcJNxbUjmIlagIAAI6nc6hTv1g6TTXceuaedf8v0YCVulbYTeff5FiifpfKioG5oYniwUBUm6XzJ-7aycTduSeV62nvTtOQklTo3TkQDdLF2_tmzfbawDL5u8WduugiKip3BXRBrGJgCRDVX4Z59layIh3GdOLt8OJCBwvv04bUBlbshSLtmgYOJwwxKt6adPp_OdVZskgNSV7j8AM5iDvB-IMFopD_OPL4shGC02cE4Zu41p",
         currentStatus: "Completed",
         updates: [
           { timestamp: "2024-08-01 09:00 AM", message: "Project started.", status: "pending" },
@@ -165,6 +208,46 @@ export const mockClients: Client[] = [
         notes: [],
         assignedEditorId: "editor2",
         internalNotes: ["Client paused new projects."],
+        deliveryDate: "2024-08-15",
+        actualDeliveryDate: "2024-08-15",
+        satisfactionRating: 4,
+        projectType: "Culture",
+      },
+    ],
+  },
+  {
+    id: "client4",
+    name: "QuantumLeap Solutions",
+    activeProjects: 0,
+    unassignedTasks: 0,
+    status: "Archived",
+    assignedManagerId: "manager3",
+    username: "quantum_user",
+    password: "password123",
+    joinDate: "2022-05-10",
+    lastActive: "2023-12-01",
+    satisfactionRatings: [
+      { month: "Nov 23", rating: 4.0 },
+      { month: "Dec 23", rating: 4.5 },
+    ],
+    videos: [
+      {
+        id: "v7",
+        title: "Year-End Review",
+        description: "Summary video for the annual review.",
+        thumbnailUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDQLYpvdAgFBgCiOcVMz0nJh1R9h9CcJNxbUjmIlagIAAI6nc6hTv1g6TTXceuaedf8v0YCVulbYTeff5FiifpfKioG5oYniwUBUm6XzJ-7aycTduSeV62nvTtOQklTo3TkQDdLF2_tmzfbawDL5u8WduugiKip3BXRBrGJgCRDVX4Z59layIh3GdOLt8OJCBwvv04bUBlbshSLtmgYOJwwxKt6adPp_OdVZskgNSV7j8AM5iDvB-IMFopD_OPL4shGC02cE4Zu41p",
+        currentStatus: "Completed",
+        updates: [
+          { timestamp: "2023-11-01 09:00 AM", message: "Project started.", status: "pending" },
+          { timestamp: "2023-12-01 02:00 PM", message: "Final delivery.", status: "completed" },
+        ],
+        notes: [],
+        assignedEditorId: "editor4",
+        internalNotes: ["Client moved to archived status."],
+        deliveryDate: "2023-12-01",
+        actualDeliveryDate: "2023-12-01",
+        satisfactionRating: 4,
+        projectType: "Review",
       },
     ],
   },

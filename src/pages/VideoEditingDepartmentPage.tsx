@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
-import { User, Briefcase, MonitorPlay, Users, Crown } from "lucide-react";
+import { User, Briefcase, MonitorPlay, Users, Crown, BarChart3 } from "lucide-react"; // Added BarChart3 icon
 import { useNavigate } from "react-router-dom";
 import { ParticleCard, BentoCardGrid, GlobalSpotlight, useMobileDetection } from "@/components/MagicBento";
 
@@ -39,7 +39,13 @@ const VideoEditingDepartmentPage = () => {
       title: "Client Assigner",
       description: "Assign clients to specific managers and create new client accounts.",
       icon: <Users className="h-8 w-8" />,
-      onClick: () => navigate('/client-assigner-dashboard') // Navigate to the new Client Assigner Dashboard
+      onClick: () => navigate('/client-assigner-dashboard')
+    },
+    {
+      title: "Analytics",
+      description: "View performance metrics and client satisfaction.",
+      icon: <BarChart3 className="h-8 w-8" />, // New icon for Analytics
+      onClick: () => navigate('/analytics-dashboard') // New route for Analytics
     },
   ];
 

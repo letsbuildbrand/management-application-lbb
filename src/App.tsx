@@ -13,7 +13,8 @@ import VideoEditorDashboardPage from "./pages/VideoEditorDashboardPage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
 import ManagerDashboardPage from "./pages/ManagerDashboardPage";
 import ManagerClientDetailViewPage from "./pages/ManagerClientDetailViewPage";
-import ClientAssignerDashboardPage from "./pages/ClientAssignerDashboardPage"; // New import
+import ClientAssignerDashboardPage from "./pages/ClientAssignerDashboardPage";
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage"; // New import
 
 const queryClient = new QueryClient();
 
@@ -33,7 +34,8 @@ const App = () => (
           <Route path="/client-dashboard" element={<ClientDashboardPage />} />
           <Route path="/manager-dashboard" element={<ManagerDashboardPage />} />
           <Route path="/manager/client/:clientId" element={<ManagerClientDetailViewPage />} />
-          <Route path="/client-assigner-dashboard" element={<ClientAssignerDashboardPage />} /> {/* New route */}
+          <Route path="/client-assigner-dashboard" element={<ClientAssignerDashboardPage />} />
+          <Route path="/analytics-dashboard" element={<AnalyticsDashboardPage />} /> {/* New route */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
