@@ -8,19 +8,35 @@ import { cn } from "@/lib/utils";
 interface LiveCountdownProps {
   deadlineTimestamp: string;
   currentStatus: string;
+  deliveryTimestamp?: string; // New prop for actual delivery time
   className?: string;
 }
 
-export const LiveCountdown: React.FC<LiveCountdownProps> = ({ deadlineTimestamp, currentStatus, className }) => {
+export const LiveCountdown: React.FC<LiveCountdownProps> = ({ deadlineTimestamp, currentStatus, deliveryTimestamp, className }) => {
   const [remainingTime, setRemainingTime] = useState<Duration | null>(null);
   const [isOverdue, setIsOverdue] = useState(false);
+  const [deliveryStatus, setDeliveryStatus] = useState<"on-time" | "late" | null>(null);
 
-  const isCompleted = currentStatus === 'Completed' || currentStatus === 'Approved';
+  const isCompletedOrApproved = currentStatus === 'Completed' || currentStatus === 'Approved';
 
   useEffect(() => {
-    if (isCompleted) {
+    if (isCompletedOrApproved && deliveryTimestamp) {
+      const deadline = parseISO(deadlineTimestamp);
+      const delivered = parseISO(deliveryTimestamp);
+      if (isAfter(delivered, deadline)) {
+        setDeliveryStatus("late");
+      } else {
+        setDeliveryStatus("on-time");
+      }
       setRemainingTime(null);
       setIsOverdue(false);
+      return;
+    }
+
+    if (isCompletedOrApproved) { // If completed/approved but no deliveryTimestamp (shouldn't happen with new logic)
+      setRemainingTime(null);
+      setIsOverdue(false);
+      setDeliveryStatus(null); // Or a default like "Completed"
       return;
     }
 
@@ -42,7 +58,7 @@ export const LiveCountdown: React.FC<LiveCountdownProps> = ({ deadlineTimestamp,
     const timer = setInterval(calculateRemainingTime, 1000); // Update every second
 
     return () => clearInterval(timer); // Cleanup on unmount
-  }, [deadlineTimestamp, currentStatus, isCompleted]);
+  }, [deadlineTimestamp, currentStatus, deliveryTimestamp, isCompletedOrApproved]);
 
   const formatCountdown = (duration: Duration | null) => {
     if (!duration) return "";
@@ -56,12 +72,26 @@ export const LiveCountdown: React.FC<LiveCountdownProps> = ({ deadlineTimestamp,
     return parts.join(" ");
   };
 
-  if (isCompleted) {
-    return (
-      <span className={cn("flex items-center gap-1 text-sm text-green-500", className)}>
-        <Clock className="h-4 w-4" /> Completed
-      </span>
-    );
+  if (isCompletedOrApproved) {
+    if (deliveryStatus === "on-time") {
+      return (
+        <span className={cn("flex items-center gap-1 text-sm text-green-500", className)}>
+          <Clock className="h-4 w-4" /> Delivered On Time
+        </span>
+      );
+    } else if (deliveryStatus === "late") {
+      return (
+        <span className={cn("flex items-center gap-1 text-sm text-orange-500", className)}>
+          <Clock className="h-4 w-4" /> Delivered Late
+        </span>
+      );
+    } else {
+      return (
+        <span className={cn("flex items-center gap-1 text-sm text-green-500", className)}>
+          <Clock className="h-4 w-4" /> Completed
+        </span>
+      );
+    }
   }
 
   if (isOverdue) {
@@ -78,7 +108,6 @@ export const LiveCountdown: React.FC<LiveCountdownProps> = ({ deadlineTimestamp,
         <Clock className="h-4 w-4" /> Calculating...
       </span>
     );
-  );
   }
 
   return (

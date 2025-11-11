@@ -65,7 +65,7 @@ const ClientDashboardPage = () => {
           description: project.description || '',
           raw_files_link: project.raw_files_link || undefined,
           instructions_link: project.instructions_link || undefined,
-          currentStatus: project.current_status,
+          current_status: project.current_status,
           credits_cost: project.credits_cost,
           priority: project.priority,
           submission_timestamp: project.submission_timestamp,
@@ -155,6 +155,24 @@ const ClientDashboardPage = () => {
     }
   };
 
+  const handleUpdateVideo = async (videoId: string, updates: Partial<Video>) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', videoId);
+
+      if (error) {
+        throw error;
+      }
+      showSuccess("Project updated successfully!");
+      fetchClientData(); // Re-fetch to ensure UI is up-to-date
+    } catch (error: any) {
+      console.error("Error updating video:", error.message);
+      showError(`Failed to update project: ${error.message}`);
+    }
+  };
+
   if (isSessionLoading || isLoadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
@@ -216,7 +234,7 @@ const ClientDashboardPage = () => {
             <TabsContent value="list" className="mt-6">
               <div className="space-y-6">
                 {videos.map((video) => (
-                  <VideoTrackingCard key={video.id} video={video} />
+                  <VideoTrackingCard key={video.id} video={video} onUpdateVideo={handleUpdateVideo} />
                 ))}
               </div>
             </TabsContent>
