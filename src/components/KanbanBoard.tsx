@@ -3,6 +3,7 @@
 import React from "react";
 import { VideoTrackingCard, Video } from "@/components/VideoTrackingCard"; // Import Video interface
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils"; // Import cn for conditional classNames
 
 // VideoUpdate and Video interfaces are now imported from VideoTrackingCard.tsx
 
@@ -14,7 +15,7 @@ const getStatusBadgeVariant = (status: string) => {
   switch (status.toLowerCase()) {
     case "completed":
     case "approved":
-      return "success";
+      return "default"; // Use default and apply custom class for success color
     case "in-progress":
     case "editing":
     case "animation":
@@ -51,7 +52,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos }) => {
             <h2 className="text-base font-bold text-foreground">
               {column.title}
             </h2>
-            <Badge variant={getStatusBadgeVariant(column.id)} className="text-sm font-medium">
+            <Badge
+              variant={getStatusBadgeVariant(column.id)}
+              className={cn(
+                "text-sm font-medium",
+                (column.id === 'completed') && 'bg-success text-success-foreground'
+              )}
+            >
               {column.videos.length}
             </Badge>
           </div>

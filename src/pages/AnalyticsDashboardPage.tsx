@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
-import { Client, Video } from "@/data/mockData"; // Import Client, Video interfaces
+import { Client } from "@/data/mockData"; // Keep Client from mockData
+import { Video } from "@/components/VideoTrackingCard"; // Import Video from VideoTrackingCard
 import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { ClientSatisfactionChart } from "@/components/ClientSatisfactionChart";
 import { DeliveryTrendsChart } from "@/components/DeliveryTrendsChart";
@@ -20,8 +21,8 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { format, parseISO, getMonth, getYear, isBefore, isAfter, addMonths } from "date-fns";
-import { supabase } from "@/integrations/supabase/client"; // Import supabase client
-import { useSession } from "@/components/SessionContextProvider"; // Import useSession
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider";
 import { showError } from "@/utils/toast";
 
 const AnalyticsDashboardPage = () => {
@@ -31,7 +32,7 @@ const AnalyticsDashboardPage = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [kpis, setKpis] = useState({
     totalDeliveries: 0,
-    avgSatisfaction: 0, // This will need a satisfaction_ratings table or similar
+    avgSatisfaction: 0,
     onTimeDeliveryRate: 0,
     activeClients: 0,
     onHoldClients: 0,
@@ -101,10 +102,11 @@ const AnalyticsDashboardPage = () => {
         delivery_timestamp: project.delivery_timestamp || undefined,
         draft_link: project.draft_link || undefined,
         final_delivery_link: project.final_delivery_link || undefined,
-        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
-        updates: [], // Not directly used in analytics, but part of Video interface
-        satisfactionRating: undefined, // Will need a separate table for this
+        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video",
+        updates: [], // Initialize updates as an empty array
+        satisfactionRating: undefined,
         projectType: undefined,
+        notes: [], // Initialize notes as an empty array
       }));
       setAllProjects(formattedProjects);
 
@@ -126,8 +128,8 @@ const AnalyticsDashboardPage = () => {
     if (clients.length === 0 && allProjects.length === 0) return;
 
     let totalDeliveries = 0;
-    let totalSatisfaction = 0; // Placeholder, needs actual data
-    let ratedDeliveries = 0; // Placeholder, needs actual data
+    let totalSatisfaction = 0;
+    let ratedDeliveries = 0;
     let onTimeDeliveries = 0;
     let totalCompletedDeliveries = 0;
     let totalDelayedDeliveries = 0;
@@ -152,7 +154,7 @@ const AnalyticsDashboardPage = () => {
         expected: number;
       };
     } = {};
-    const monthlySatisfactionData: { [key: string]: { sum: number; count: number } } = {}; // Placeholder
+    const monthlySatisfactionData: { [key: string]: { sum: number; count: number } } = {};
 
     const activeClients = clients.filter((c) => c.status === "Active").length;
     const onHoldClients = clients.filter((c) => c.status === "On Hold").length;

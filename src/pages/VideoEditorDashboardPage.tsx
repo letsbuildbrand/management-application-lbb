@@ -17,10 +17,10 @@ import {
 import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import { useSession } from "@/components/SessionContextProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { Video } from "@/data/mockData";
-import { EditorVideoCard } from "@/components/EditorVideoCard"; // Import EditorVideoCard
+import { Video } from "@/components/VideoTrackingCard"; // Import Video from VideoTrackingCard
+import { EditorVideoCard } from "@/components/EditorVideoCard";
 import { showSuccess, showError } from "@/utils/toast";
-import { parseISO, isBefore } from "date-fns"; // For sorting
+import { parseISO, isBefore } from "date-fns";
 
 const VideoEditorDashboardPage = () => {
   const { user, isLoading: isSessionLoading, profile } = useSession();
@@ -43,9 +43,9 @@ const VideoEditorDashboardPage = () => {
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('*')
-        .eq('editor_id', user.id) // Changed assigned_editor_id to editor_id
-        .neq('current_status', 'Completed') // Exclude completed projects from active view
-        .neq('current_status', 'Approved'); // Exclude approved projects from active view
+        .eq('editor_id', user.id)
+        .neq('current_status', 'Completed')
+        .neq('current_status', 'Approved');
 
       if (projectsError) {
         console.error("Error fetching assigned projects:", projectsError);
@@ -72,10 +72,11 @@ const VideoEditorDashboardPage = () => {
         delivery_timestamp: project.delivery_timestamp || undefined,
         draft_link: project.draft_link || undefined,
         final_delivery_link: project.final_delivery_link || undefined,
-        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
-        updates: [], // Assuming updates are fetched separately or managed by backend
-        satisfactionRating: undefined, // Assuming satisfaction rating is fetched separately
-        projectType: undefined, // Assuming project type is fetched separately
+        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video",
+        updates: [], // Initialize updates as an empty array
+        satisfactionRating: undefined,
+        projectType: undefined,
+        notes: [], // Initialize notes as an empty array
       }));
 
       // Sort by deadline (adjusted_deadline_timestamp first, then initial_deadline_timestamp)
@@ -106,13 +107,13 @@ const VideoEditorDashboardPage = () => {
         .from('projects')
         .update(updates)
         .eq('id', videoId)
-        .eq('editor_id', user?.id); // Ensure editor can only update their own projects
+        .eq('editor_id', user?.id);
 
       if (error) {
         throw error;
       }
       showSuccess("Project updated successfully!");
-      fetchAssignedVideos(); // Re-fetch to ensure UI is up-to-date
+      fetchAssignedVideos();
     } catch (error: any) {
       console.error("Error updating video:", error.message);
       showError(`Failed to update project: ${error.message}`);
@@ -182,7 +183,7 @@ const VideoEditorDashboardPage = () => {
 
           <Menu
             menuItemStyles={{
-              button: ({ level, active, disabled, hover }) => {
+              button: ({ level, active, disabled }) => { // Removed 'hover'
                 return {
                   backgroundColor: active ? 'hsl(var(--sidebar-primary))' : undefined,
                   color: active ? 'hsl(var(--sidebar-primary-foreground))' : undefined,
@@ -204,7 +205,7 @@ const VideoEditorDashboardPage = () => {
             {!collapsed && <Button className="w-full">New Project</Button>}
             <Menu
               menuItemStyles={{
-                button: ({ level, active, disabled, hover }) => {
+                button: ({ level, active, disabled }) => { // Removed 'hover'
                   return {
                     backgroundColor: active ? 'hsl(var(--sidebar-primary))' : undefined,
                     color: active ? 'hsl(var(--sidebar-primary-foreground))' : undefined,

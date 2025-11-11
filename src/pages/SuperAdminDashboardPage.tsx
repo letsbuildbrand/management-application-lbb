@@ -18,9 +18,9 @@ const SuperAdminDashboardPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isSessionLoading && (!user || profile?.role !== 'super_admin')) { // Changed 'admin' to 'super_admin'
+    if (!isSessionLoading && (!user || profile?.role !== 'super_admin')) {
       showError("Access Denied: You must be a super admin to view this page.");
-      navigate('/login'); // Redirect to login if not super admin
+      navigate('/login');
     }
   }, [isSessionLoading, user, profile, navigate]);
 
@@ -59,7 +59,7 @@ const SuperAdminDashboardPage = () => {
     }
   };
 
-  if (isSessionLoading || !user || profile?.role !== 'super_admin') { // Changed 'admin' to 'super_admin'
+  if (isSessionLoading || !user || profile?.role !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         <p>Loading super admin dashboard...</p>
@@ -95,7 +95,7 @@ const SuperAdminDashboardPage = () => {
             <p className="mt-2">New users will receive an email to verify their account and set their password.</p>
             <p className="mt-2 text-sm text-red-400">
               **Important:** For the `create-user` Edge Function to work, you need to set the `SUPABASE_SERVICE_ROLE_KEY` secret in your Supabase project.
-              Go to <resource-link href="https://app.supabase.com/project/faywcisblbmuqdfauoej/functions/secrets">Project -> Edge Functions -> Manage Secrets</resource-link> and add `SUPABASE_SERVICE_ROLE_KEY` with your project's service role key.
+              Go to <a href="https://app.supabase.com/project/faywcisblbmuqdfauoej/functions/secrets" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Project -> Edge Functions -> Manage Secrets</a> and add `SUPABASE_SERVICE_ROLE_KEY` with your project's service role key.
             </p>
           </div>
         </div>

@@ -5,13 +5,14 @@ import { useParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
 import { ManagerVideoTrackingCard } from "@/components/ManagerVideoTrackingCard";
-import { Video, Client } from "@/data/mockData"; // Import Video, Client interfaces
+import { Video } from "@/components/VideoTrackingCard"; // Import Video from VideoTrackingCard
+import { Client } from "@/data/mockData"; // Import Client interface
 import { Badge } from "@/components/ui/badge";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client"; // Import supabase client
-import { useSession } from "@/components/SessionContextProvider"; // Import useSession
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider";
 
 const ManagerClientDetailViewPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
@@ -34,7 +35,7 @@ const ManagerClientDetailViewPage = () => {
         .from('clients')
         .select('*')
         .eq('id', clientId)
-        .eq('assigned_manager_id', user.id) // Ensure manager can only see their assigned clients
+        .eq('assigned_manager_id', user.id)
         .single();
 
       if (clientError) {
@@ -50,7 +51,7 @@ const ManagerClientDetailViewPage = () => {
         .from('projects')
         .select('*')
         .eq('client_id', clientId)
-        .eq('manager_id', user.id) // Ensure manager can only see projects they manage for this client
+        .eq('manager_id', user.id)
         .order('submission_timestamp', { ascending: false });
 
       if (projectsError) {
@@ -78,10 +79,11 @@ const ManagerClientDetailViewPage = () => {
         delivery_timestamp: project.delivery_timestamp || undefined,
         draft_link: project.draft_link || undefined,
         final_delivery_link: project.final_delivery_link || undefined,
-        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
-        updates: [], // Assuming updates are fetched separately or managed by backend
-        satisfactionRating: undefined, // Assuming satisfaction rating is fetched separately
-        projectType: undefined, // Assuming project type is fetched separately
+        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video",
+        updates: [], // Initialize updates as an empty array
+        satisfactionRating: undefined,
+        projectType: undefined,
+        notes: [], // Initialize notes as an empty array
       }));
       setVideos(formattedVideos);
 
@@ -105,13 +107,13 @@ const ManagerClientDetailViewPage = () => {
         .from('projects')
         .update(updates)
         .eq('id', videoId)
-        .eq('manager_id', user?.id); // Ensure manager can only update their own projects
+        .eq('manager_id', user?.id);
 
       if (error) {
         throw error;
       }
       showSuccess("Project updated successfully!");
-      fetchClientProjects(); // Re-fetch to ensure UI is up-to-date
+      fetchClientProjects();
     } catch (error: any) {
       console.error("Error updating video:", error.message);
       showError(`Failed to update project: ${error.message}`);

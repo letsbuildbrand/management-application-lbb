@@ -12,9 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronUp, MessageSquareText, PlusCircle, CheckCircle, Clock, Loader, AlertCircle } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { LiveCountdown } from "@/components/LiveCountdown"; // Import LiveCountdown
-import { RequestChangesDialog } from "@/components/RequestChangesDialog"; // Import RequestChangesDialog
-import { ChatModal } from "@/components/ChatModal"; // Import ChatModal
+import { LiveCountdown } from "@/components/LiveCountdown";
+import { RequestChangesDialog } from "@/components/RequestChangesDialog";
+import { ChatModal } from "@/components/ChatModal";
 
 interface VideoUpdate {
   timestamp: string;
@@ -44,6 +44,8 @@ export interface Video { // Exported for reuse
   updates: VideoUpdate[];
   satisfactionRating?: number;
   projectType?: string;
+  notes: string[]; // Client-facing notes (will be replaced by chat_messages)
+  internalNotes?: string[]; // Internal team notes (will be replaced by chat_messages with is_internal_only)
 }
 
 interface VideoTrackingCardProps {
@@ -70,7 +72,7 @@ const getStatusBadgeVariant = (status: string) => {
   switch (status.toLowerCase()) {
     case "completed":
     case "approved":
-      return "success";
+      return "default"; // Use default and apply custom class for success color
     case "in-progress":
     case "editing":
     case "animation":
@@ -144,12 +146,17 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, onU
             </div>
           </div>
           <div className="flex flex-col items-end space-y-2">
-            <Badge variant={getStatusBadgeVariant(video.current_status)}>{video.current_status}</Badge>
+            <Badge
+              variant={getStatusBadgeVariant(video.current_status)}
+              className={video.current_status.toLowerCase() === 'completed' || video.current_status.toLowerCase() === 'approved' ? 'bg-success text-success-foreground' : ''}
+            >
+              {video.current_status}
+            </Badge>
             {deadlineToUse && (
               <LiveCountdown
                 deadlineTimestamp={deadlineToUse}
                 currentStatus={video.current_status}
-                deliveryTimestamp={video.delivery_timestamp} // Pass delivery timestamp
+                deliveryTimestamp={video.delivery_timestamp}
                 className="text-sm"
               />
             )}

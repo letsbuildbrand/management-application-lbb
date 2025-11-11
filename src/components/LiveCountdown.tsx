@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { differenceInSeconds, formatDuration, intervalToDuration, isAfter, parseISO } from "date-fns";
+import { differenceInSeconds, formatDuration, intervalToDuration, isAfter, parseISO, Duration } from "date-fns";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
