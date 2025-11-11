@@ -19,10 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AssignEditorDialog } from "@/components/AssignEditorDialog";
-import { ChangeDeadlineDialog } from "@/components/ChangeDeadlineDialog"; // Import ChangeDeadlineDialog
-import { MoreVertical, User, Edit, CheckCircle, Loader, AlertCircle, Clock, CalendarDays } from "lucide-react"; // Added CalendarDays icon
+import { ChangeDeadlineDialog } from "@/components/ChangeDeadlineDialog"; // Corrected import path
+import { MoreVertical, User, Edit, CheckCircle, Loader, AlertCircle, Clock, CalendarDays } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client"; // Import supabase client
+import { supabase } from "@/integrations/supabase/client";
 
 interface ManagerVideoTrackingCardProps {
   video: Video;
