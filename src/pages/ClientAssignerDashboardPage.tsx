@@ -12,8 +12,10 @@ import { CreateUserDialog } from "@/components/CreateUserDialog"; // Updated imp
 import { AssignManagerDialog } from "@/components/AssignManagerDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client"; // Import supabase client
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 const ClientAssignerDashboardPage = () => {
+  const { user, isLoading: isSessionLoading, profile } = useSession();
   const [clients, setClients] = useState<Client[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
@@ -21,42 +23,36 @@ const ClientAssignerDashboardPage = () => {
 
   const fetchClients = useCallback(async () => {
     setIsLoadingClients(true);
+    // Fetch client companies
     const { data: clientsData, error: clientsError } = await supabase
-      .from('profiles') // Fetch from profiles table
-      .select('*')
-      .eq('role', 'client'); // Filter for clients
+      .from('clients')
+      .select('*');
 
     if (clientsError) {
       console.error("Error fetching clients:", clientsError);
       showError("Failed to load clients.");
       setClients([]);
     } else {
-      // Fetch projects for each client to calculate activeProjects and unassignedTasks
-      const clientsWithMetrics = await Promise.all(clientsData.map(async (clientProfile) => {
+      // For each client company, fetch associated projects to calculate activeProjects and unassignedTasks
+      const clientsWithMetrics = await Promise.all(clientsData.map(async (clientCompany) => {
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
-          .select('id, current_status, assigned_editor_id')
-          .eq('client_id', clientProfile.id);
+          .select('id, current_status, editor_id')
+          .eq('client_id', clientCompany.id);
 
         if (projectsError) {
-          console.error(`Error fetching projects for client ${clientProfile.id}:`, projectsError);
-          return { ...clientProfile, activeProjects: 0, unassignedTasks: 0 };
+          console.error(`Error fetching projects for client ${clientCompany.id}:`, projectsError);
+          return { ...clientCompany, activeProjects: 0, unassignedTasks: 0 };
         }
 
         const activeProjects = projectsData.filter(p => p.current_status !== 'Completed' && p.current_status !== 'Approved').length;
-        const unassignedTasks = projectsData.filter(p => p.current_status === 'Requested' && !p.assigned_editor_id).length;
+        const unassignedTasks = projectsData.filter(p => p.current_status === 'Requested' && !p.editor_id).length;
 
         return {
-          id: clientProfile.id,
-          name: `${clientProfile.first_name} ${clientProfile.last_name || ''}`.trim(),
-          contact_email: clientProfile.email, // Assuming email is available in profile
-          contact_phone: clientProfile.contact_phone,
-          monthly_credits: clientProfile.monthly_credits,
-          credits_remaining: clientProfile.credits_remaining,
-          status: clientProfile.status,
-          assigned_manager_id: clientProfile.assigned_manager_id,
-          joinDate: clientProfile.join_date,
-          lastActive: clientProfile.last_active,
+          id: clientCompany.id,
+          name: clientCompany.name,
+          status: clientCompany.status,
+          assigned_manager_id: clientCompany.assigned_manager_id,
           activeProjects,
           unassignedTasks,
         } as Client;
@@ -80,10 +76,9 @@ const ClientAssignerDashboardPage = () => {
     } else {
       const managersWithLoad = await Promise.all(profilesData.map(async (profile) => {
         const { count, error: countError } = await supabase
-          .from('profiles') // Count clients from profiles table
+          .from('clients') // Count clients from clients table
           .select('id', { count: 'exact' })
-          .eq('assigned_manager_id', profile.id)
-          .eq('role', 'client'); // Ensure we only count clients
+          .eq('assigned_manager_id', profile.id);
 
         if (countError) {
           console.error(`Error counting clients for manager ${profile.id}:`, countError);
@@ -108,9 +103,11 @@ const ClientAssignerDashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchClients();
-    fetchManagers();
-  }, [fetchClients, fetchManagers]);
+    if (!isSessionLoading && user && profile?.role === 'client_assigner') {
+      fetchClients();
+      fetchManagers();
+    }
+  }, [isSessionLoading, user, profile, fetchClients, fetchManagers]);
 
   const handleCreateUser = async (firstName: string, email: string, password: string, role: string) => {
     try {
@@ -123,6 +120,8 @@ const ClientAssignerDashboardPage = () => {
             first_name: firstName,
             last_name: '', // Assuming last name is optional or handled by trigger
             role: role, // Pass the selected role
+            username: firstName, // Use first name as username for now
+            company_name: role === 'client' ? `${firstName} Company` : undefined, // For client role
           },
         },
       });
@@ -134,11 +133,6 @@ const ClientAssignerDashboardPage = () => {
       if (!authData.user) {
         throw new Error("User not created during signup.");
       }
-
-      // The handle_new_user trigger should automatically create the profile with the correct role.
-      // If the role is 'client', we also need to insert into the 'clients' table (which is now part of profiles)
-      // The trigger already handles setting default monthly_credits, credits_remaining, status for clients.
-      // No separate 'clients' table insertion is needed anymore.
 
       showSuccess(`User "${firstName}" (${role}) created successfully! An email has been sent to ${email} for verification.`);
       fetchClients(); // Refresh client list (if a client was created)
@@ -153,7 +147,7 @@ const ClientAssignerDashboardPage = () => {
   const handleAssignManager = async (clientId: string, managerId: string) => {
     try {
       const { error } = await supabase
-        .from('profiles') // Update the profiles table
+        .from('clients') // Update the clients table
         .update({ assigned_manager_id: managerId })
         .eq('id', clientId);
 
@@ -172,12 +166,31 @@ const ClientAssignerDashboardPage = () => {
     }
   };
 
+  if (isSessionLoading || isLoadingClients || isLoadingManagers) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <p>Loading client assigner dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!user || profile?.role !== 'client_assigner') {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-8 mt-16">
+          <p className="text-xl text-muted-foreground">Access Denied: You must be logged in as a client assigner to view this page.</p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       <main className="flex-1 px-4 sm:px-6 md:px-10 py-8 mt-16">
         <div className="max-w-screen-2xl mx-auto">
-          <WelcomeHeader userName="Yadish" />
+          <WelcomeHeader userName={profile?.first_name || "Client Assigner"} />
           <div className="flex flex-wrap justify-between items-start gap-4 mb-6 px-4">
             <div className="flex min-w-72 flex-col gap-1">
               <h1 className="text-3xl font-black leading-tight tracking-tighter flex items-center gap-3">
@@ -188,7 +201,7 @@ const ClientAssignerDashboardPage = () => {
                 Oversee all users and assign clients to managers.
               </p>
             </div>
-            <CreateUserDialog onCreateUser={handleCreateUser}> {/* Updated component name */}
+            <CreateUserDialog onCreateUser={handleCreateUser}>
               <Button className="h-10 px-5">
                 <PlusCircle className="h-4 w-4 mr-2" /> Create New User
               </Button>
@@ -198,9 +211,7 @@ const ClientAssignerDashboardPage = () => {
           {/* Client List */}
           <div className="space-y-4 px-4">
             <h3 className="text-2xl font-semibold mb-4">Active Clients</h3>
-            {isLoadingClients ? (
-              <p className="text-center text-muted-foreground py-8">Loading clients...</p>
-            ) : clients.length > 0 ? (
+            {clients.length > 0 ? (
               clients.map(client => {
                 const assignedManager = client.assigned_manager_id
                   ? managers.find(m => m.id === client.assigned_manager_id)

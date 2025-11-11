@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AssignEditorDialog } from "@/components/AssignEditorDialog";
-import { ChangeDeadlineDialog } from "@/components/ChangeDeadline/Dialog"; // Import ChangeDeadlineDialog
+import { ChangeDeadlineDialog } from "@/components/ChangeDeadlineDialog"; // Import ChangeDeadlineDialog
 import { MoreVertical, User, Edit, CheckCircle, Loader, AlertCircle, Clock, CalendarDays } from "lucide-react"; // Added CalendarDays icon
 import { showSuccess } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client"; // Import supabase client

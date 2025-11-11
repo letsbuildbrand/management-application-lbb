@@ -10,9 +10,10 @@ import { ArrowRight, LayoutGrid, AlertTriangle, CheckCircle2 } from "lucide-reac
 import { Client } from "@/data/mockData"; // Import Client interface
 import { supabase } from "@/integrations/supabase/client"; // Import supabase client
 import { useSession } from "@/components/SessionContextProvider"; // Import useSession
+import { showError } from "@/utils/toast";
 
 const ManagerDashboardPage = () => {
-  const { user, isLoading: isSessionLoading } = useSession();
+  const { user, isLoading: isSessionLoading, profile } = useSession();
   const [clients, setClients] = useState<Client[]>([]);
   const [totalActiveProjects, setTotalActiveProjects] = useState(0);
   const [pendingAssignments, setPendingAssignments] = useState(0);
@@ -20,7 +21,7 @@ const ManagerDashboardPage = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   const fetchManagerData = useCallback(async () => {
-    if (!user) {
+    if (!user || !profile || profile.role !== 'manager') {
       setIsLoadingData(false);
       return;
     }
@@ -46,8 +47,9 @@ const ManagerDashboardPage = () => {
       const clientsWithMetrics = await Promise.all(clientsData.map(async (client) => {
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
-          .select('id, current_status, assigned_editor_id')
-          .eq('client_id', client.id);
+          .select('id, current_status, editor_id') // Changed assigned_editor_id to editor_id
+          .eq('client_id', client.id)
+          .eq('manager_id', user.id); // Ensure manager can only see projects they manage for this client
 
         if (projectsError) {
           console.error(`Error fetching projects for client ${client.id}:`, projectsError);
@@ -55,7 +57,7 @@ const ManagerDashboardPage = () => {
         }
 
         const activeProjects = projectsData.filter(p => p.current_status !== 'Completed' && p.current_status !== 'Approved').length;
-        const unassignedTasks = projectsData.filter(p => p.current_status === 'Requested' && !p.assigned_editor_id).length;
+        const unassignedTasks = projectsData.filter(p => p.current_status === 'Requested' && !p.editor_id).length; // Changed assigned_editor_id to editor_id
         const reviewProjects = projectsData.filter(p => p.current_status === 'Review' || p.current_status === 'Awaiting Feedback').length;
 
         activeProjectsCount += activeProjects;
@@ -76,13 +78,13 @@ const ManagerDashboardPage = () => {
     } finally {
       setIsLoadingData(false);
     }
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
-    if (!isSessionLoading && user) {
+    if (!isSessionLoading && user && profile?.role === 'manager') {
       fetchManagerData();
     }
-  }, [isSessionLoading, user, fetchManagerData]);
+  }, [isSessionLoading, user, profile, fetchManagerData]);
 
   if (isSessionLoading || isLoadingData) {
     return (
@@ -92,12 +94,12 @@ const ManagerDashboardPage = () => {
     );
   }
 
-  if (!user) {
+  if (!user || profile?.role !== 'manager') {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-8 mt-16">
-          <p className="text-xl text-muted-foreground">Please log in as a manager to view this dashboard.</p>
+          <p className="text-xl text-muted-foreground">Access Denied: You must be logged in as a manager to view this dashboard.</p>
         </main>
       </div>
     );
@@ -108,7 +110,7 @@ const ManagerDashboardPage = () => {
       <Navbar />
       <main className="flex-1 px-4 sm:px-6 md:px-10 py-8 mt-16">
         <div className="max-w-screen-2xl mx-auto">
-          <WelcomeHeader userName="Yadish" />
+          <WelcomeHeader userName={profile?.first_name || "Manager"} />
           <h2 className="text-3xl font-bold tracking-tight mb-8 text-left px-4">Manager's Command Center</h2>
 
           {/* Header KPIs */}

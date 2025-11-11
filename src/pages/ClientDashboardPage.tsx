@@ -15,40 +15,60 @@ import { RequestVideoDialog } from "@/components/RequestVideoDialog"; // Import 
 import { Client } from "@/data/mockData"; // Import Client interface
 
 const ClientDashboardPage = () => {
-  const { user, isLoading: isSessionLoading } = useSession();
-  const [client, setClient] = useState<Client | null>(null);
+  const { user, isLoading: isSessionLoading, profile } = useSession();
+  const [clientCompany, setClientCompany] = useState<Client | null>(null); // Represents the client company
+  const [clientProfile, setClientProfile] = useState<any | null>(null); // Represents the logged-in user's profile
   const [videos, setVideos] = useState<Video[]>([]);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   const fetchClientData = useCallback(async () => {
-    if (!user) {
+    if (!user || !profile) {
       setIsLoadingData(false);
       return;
     }
 
     setIsLoadingData(true);
     try {
-      // Fetch client details
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', user.id)
+      // Fetch the client company associated with the logged-in user
+      const { data: mappingData, error: mappingError } = await supabase
+        .from('user_client_mapping')
+        .select('client_id')
+        .eq('user_id', user.id)
         .single();
 
-      if (clientError) {
-        console.error("Error fetching client data:", clientError);
-        showError("Failed to load client data.");
-        setClient(null);
-      } else {
-        setClient(clientData);
+      if (mappingError || !mappingData) {
+        console.error("Error fetching client mapping:", mappingError);
+        showError("Failed to load your client company data.");
+        setClientCompany(null);
+        setClientProfile(profile); // Still set the profile
+        return;
       }
+
+      const clientCompanyId = mappingData.client_id;
+
+      const { data: companyData, error: companyError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', clientCompanyId)
+        .single();
+
+      if (companyError) {
+        console.error("Error fetching client company data:", companyError);
+        showError("Failed to load your client company details.");
+        setClientCompany(null);
+      } else {
+        setClientCompany(companyData);
+      }
+
+      // The user's profile already contains monthly_credits and credits_remaining
+      setClientProfile(profile);
 
       // Fetch client's projects (videos)
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('*')
-        .eq('client_id', user.id)
+        .eq('client_id', clientCompanyId)
         .order('submission_timestamp', { ascending: false });
 
       if (projectsError) {
@@ -56,11 +76,11 @@ const ClientDashboardPage = () => {
         showError("Failed to load your projects.");
         setVideos([]);
       } else {
-        // Map Supabase project data to Video interface, adding default thumbnailUrl and notes
         const formattedVideos: Video[] = projectsData.map(project => ({
           id: project.id,
           client_id: project.client_id,
-          assignedEditorId: project.assigned_editor_id || undefined,
+          manager_id: project.manager_id || undefined,
+          editor_id: project.editor_id || undefined,
           title: project.title,
           description: project.description || '',
           raw_files_link: project.raw_files_link || undefined,
@@ -74,10 +94,8 @@ const ClientDashboardPage = () => {
           delivery_timestamp: project.delivery_timestamp || undefined,
           draft_link: project.draft_link || undefined,
           final_delivery_link: project.final_delivery_link || undefined,
-          thumbnailUrl: project.thumbnailUrl || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
+          thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
           updates: [], // This would typically be fetched from a separate 'project_updates' table
-          notes: [], // This would typically be fetched from a separate 'chat_messages' or 'notes' table
-          internalNotes: [], // Same as above
           satisfactionRating: undefined, // Same as above
           projectType: undefined, // Same as above
         }));
@@ -89,21 +107,21 @@ const ClientDashboardPage = () => {
     } finally {
       setIsLoadingData(false);
     }
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
-    if (!isSessionLoading && user) {
+    if (!isSessionLoading && user && profile?.role === 'client') {
       fetchClientData();
     }
-  }, [isSessionLoading, user, fetchClientData]);
+  }, [isSessionLoading, user, profile, fetchClientData]);
 
   const handleRequestNewVideo = async (title: string, description: string) => {
-    if (!user || !client) {
+    if (!user || !clientProfile || !clientCompany) {
       showError("You must be logged in as a client to request a video.");
       throw new Error("User or client data not available.");
     }
 
-    if (client.credits_remaining <= 0) {
+    if (clientProfile.credits_remaining <= 0) {
       showError("You do not have enough credits to request a new video.");
       throw new Error("Insufficient credits.");
     }
@@ -115,7 +133,8 @@ const ClientDashboardPage = () => {
       const { data, error } = await supabase
         .from('projects')
         .insert({
-          client_id: user.id,
+          client_id: clientCompany.id, // Use the client company ID
+          manager_id: clientCompany.assigned_manager_id, // Assign to the client company's manager
           title: title,
           description: description,
           current_status: 'Requested',
@@ -124,7 +143,7 @@ const ClientDashboardPage = () => {
           submission_timestamp: now.toISOString(),
           initial_deadline_timestamp: initialDeadline.toISOString(),
           adjusted_deadline_timestamp: initialDeadline.toISOString(), // Initially same as initial
-          thumbnailUrl: "https://via.placeholder.com/150/cccccc/ffffff?text=New+Video", // Placeholder
+          thumbnail_url: "https://via.placeholder.com/150/cccccc/ffffff?text=New+Video", // Placeholder
         })
         .select()
         .single();
@@ -133,17 +152,17 @@ const ClientDashboardPage = () => {
         throw error;
       }
 
-      // Update client's credits_remaining
+      // Update client's credits_remaining in their profile
       const { error: creditError } = await supabase
-        .from('clients')
-        .update({ credits_remaining: client.credits_remaining - 1 })
+        .from('profiles')
+        .update({ credits_remaining: clientProfile.credits_remaining - 1 })
         .eq('id', user.id);
 
       if (creditError) {
         console.error("Error updating client credits:", creditError);
         showError("Video requested, but failed to update credits.");
       } else {
-        setClient(prevClient => prevClient ? { ...prevClient, credits_remaining: prevClient.credits_remaining - 1 } : null);
+        setClientProfile(prevProfile => prevProfile ? { ...prevProfile, credits_remaining: prevProfile.credits_remaining - 1 } : null);
       }
 
       showSuccess("Your video request has been submitted!");
@@ -181,7 +200,7 @@ const ClientDashboardPage = () => {
     );
   }
 
-  if (!user || !client) {
+  if (!user || !clientProfile || clientProfile.role !== 'client' || !clientCompany) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navbar />
@@ -212,11 +231,11 @@ const ClientDashboardPage = () => {
                   <CardTitle className="text-lg font-semibold">Credits Remaining</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <p className="text-3xl font-bold text-primary">{client.credits_remaining} / {client.monthly_credits}</p>
+                  <p className="text-3xl font-bold text-primary">{clientProfile.credits_remaining} / {clientProfile.monthly_credits}</p>
                 </CardContent>
               </Card>
               <RequestVideoDialog onRequestVideo={handleRequestNewVideo}>
-                <Button className="h-10 px-5" disabled={client.credits_remaining <= 0}>
+                <Button className="h-10 px-5" disabled={clientProfile.credits_remaining <= 0}>
                   <PlusCircle className="h-4 w-4 mr-2" /> Request New Video
                 </Button>
               </RequestVideoDialog>

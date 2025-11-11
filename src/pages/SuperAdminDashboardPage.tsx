@@ -18,36 +18,40 @@ const SuperAdminDashboardPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isSessionLoading && (!user || profile?.role !== 'admin')) {
-      showError("Access Denied: You must be an admin to view this page.");
-      navigate('/login'); // Redirect to login if not admin
+    if (!isSessionLoading && (!user || profile?.role !== 'super_admin')) { // Changed 'admin' to 'super_admin'
+      showError("Access Denied: You must be a super admin to view this page.");
+      navigate('/login'); // Redirect to login if not super admin
     }
   }, [isSessionLoading, user, profile, navigate]);
 
   const handleCreateUser = async (firstName: string, email: string, password: string, role: string) => {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: '', // Last name is optional, can be added to dialog if needed
-            role: role,
-          },
+      const companyName = role === 'client' ? `${firstName} Company` : undefined;
+
+      // Invoke the Edge Function to create the user
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName: '', // Can extend CreateUserDialog to include last name
+          role,
+          companyName,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
         },
       });
 
-      if (authError) {
-        throw authError;
+      if (error) {
+        throw error;
       }
 
-      if (!authData.user) {
-        throw new Error("User not created during signup.");
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       showSuccess(`User "${firstName}" (${role}) created successfully! An email has been sent to ${email} for verification.`);
-      // Optionally, you might want to refresh a list of users here if you add one to this dashboard
     } catch (error: any) {
       console.error("Error creating user:", error.message);
       showError(`Failed to create user: ${error.message}`);
@@ -55,10 +59,10 @@ const SuperAdminDashboardPage = () => {
     }
   };
 
-  if (isSessionLoading || !user || profile?.role !== 'admin') {
+  if (isSessionLoading || !user || profile?.role !== 'super_admin') { // Changed 'admin' to 'super_admin'
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <p>Loading admin dashboard...</p>
+        <p>Loading super admin dashboard...</p>
       </div>
     );
   }
@@ -68,7 +72,7 @@ const SuperAdminDashboardPage = () => {
       <Navbar />
       <main className="flex-1 px-4 sm:px-6 md:px-10 py-8 mt-16">
         <div className="max-w-screen-2xl mx-auto">
-          <WelcomeHeader userName={profile?.first_name || "Admin"} />
+          <WelcomeHeader userName={profile?.first_name || "Super Admin"} />
           <div className="flex flex-wrap justify-between items-start gap-4 mb-6 px-4">
             <div className="flex min-w-72 flex-col gap-1">
               <h1 className="text-3xl font-black leading-tight tracking-tighter flex items-center gap-3">
@@ -87,9 +91,12 @@ const SuperAdminDashboardPage = () => {
           </div>
 
           <div className="p-4 text-muted-foreground">
-            {/* You can add a list of existing users here if desired */}
             <p>Use the "Create New User" button to generate credentials for any role.</p>
             <p className="mt-2">New users will receive an email to verify their account and set their password.</p>
+            <p className="mt-2 text-sm text-red-400">
+              **Important:** For the `create-user` Edge Function to work, you need to set the `SUPABASE_SERVICE_ROLE_KEY` secret in your Supabase project.
+              Go to <resource-link href="https://app.supabase.com/project/faywcisblbmuqdfauoej/functions/secrets">Project -> Edge Functions -> Manage Secrets</resource-link> and add `SUPABASE_SERVICE_ROLE_KEY` with your project's service role key.
+            </p>
           </div>
         </div>
       </main>

@@ -40,7 +40,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos }) => {
 
   const groupedVideos = columns.map(column => ({
     ...column,
-    videos: videos.filter(video => column.statuses.includes(video.currentStatus.toLowerCase())),
+    videos: videos.filter(video => column.statuses.includes(video.current_status.toLowerCase())),
   }));
 
   return (

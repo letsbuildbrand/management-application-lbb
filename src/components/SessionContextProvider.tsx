@@ -23,6 +23,50 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      showError("Failed to load user profile.");
+      setProfile(null);
+    } else {
+      setProfile(profileData);
+      return profileData;
+    }
+    return null;
+  }, []);
+
+  const redirectToRoleDashboard = useCallback((userProfile: any) => {
+    if (!userProfile) return;
+
+    switch (userProfile.role) {
+      case 'super_admin':
+        navigate('/super-admin-dashboard');
+        break;
+      case 'admin': // Admin can view all departments, so redirect to departments page
+        navigate('/departments');
+        break;
+      case 'client_assigner':
+        navigate('/client-assigner-dashboard');
+        break;
+      case 'manager':
+        navigate('/manager-dashboard');
+        break;
+      case 'editor':
+        navigate('/video-editing-dashboard');
+        break;
+      case 'client':
+        navigate('/client-dashboard');
+        break;
+      default:
+        navigate('/home'); // Default redirect for unknown roles or general users
+    }
+  }, [navigate]);
+
   useEffect(() => {
     const getSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -32,6 +76,18 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       }
       setSession(session);
       setUser(session?.user || null);
+
+      if (session?.user) {
+        const userProfile = await fetchProfile(session.user.id);
+        if (userProfile) {
+          redirectToRoleDashboard(userProfile);
+        }
+      } else {
+        // If no session or user, ensure we are on the login page
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
+      }
       setIsLoading(false);
     };
 
@@ -44,38 +100,10 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
 
       if (event === 'SIGNED_IN') {
         showSuccess("Welcome back!");
-        // Fetch profile immediately after sign-in
         if (currentSession?.user) {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentSession.user.id)
-            .single();
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            showError("Failed to load user profile.");
-          } else {
-            setProfile(profileData);
-            // Redirect based on role
-            switch (profileData.role) {
-              case 'admin':
-                navigate('/super-admin-dashboard'); // Redirect admin to their dashboard
-                break;
-              case 'client_assigner':
-                navigate('/client-assigner-dashboard');
-                break;
-              case 'manager':
-                navigate('/manager-dashboard');
-                break;
-              case 'editor':
-                navigate('/video-editing-dashboard');
-                break;
-              case 'client':
-                navigate('/client-dashboard');
-                break;
-              default:
-                navigate('/');
-            }
+          const userProfile = await fetchProfile(currentSession.user.id);
+          if (userProfile) {
+            redirectToRoleDashboard(userProfile);
           }
         }
       } else if (event === 'SIGNED_OUT') {
@@ -84,35 +112,9 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
         navigate('/login');
       } else if (event === 'INITIAL_SESSION' && currentSession?.user) {
         // For initial session, if user is already logged in, fetch profile and redirect
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentSession.user.id)
-          .single();
-        if (profileError) {
-          console.error("Error fetching profile on initial session:", profileError);
-          showError("Failed to load user profile on initial session.");
-        } else {
-          setProfile(profileData);
-          switch (profileData.role) {
-            case 'admin':
-              navigate('/super-admin-dashboard'); // Redirect admin to their dashboard
-              break;
-            case 'client_assigner':
-              navigate('/client-assigner-dashboard');
-              break;
-            case 'manager':
-              navigate('/manager-dashboard');
-              break;
-            case 'editor':
-              navigate('/video-editing-dashboard');
-              break;
-            case 'client':
-              navigate('/client-dashboard');
-              break;
-            default:
-              navigate('/');
-          }
+        const userProfile = await fetchProfile(currentSession.user.id);
+        if (userProfile) {
+          redirectToRoleDashboard(userProfile);
         }
       }
     });
@@ -120,27 +122,7 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
-
-  useEffect(() => {
-    // Fetch profile if user is available but profile isn't set (e.g., page refresh)
-    const fetchProfile = async () => {
-      if (user && !profile) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        if (profileError) {
-          console.error("Error fetching profile on user change:", profileError);
-          showError("Failed to load user profile.");
-        } else {
-          setProfile(profileData);
-        }
-      }
-    };
-    fetchProfile();
-  }, [user, profile]);
+  }, [navigate, fetchProfile, redirectToRoleDashboard]);
 
   const signOut = async () => {
     setIsLoading(true);

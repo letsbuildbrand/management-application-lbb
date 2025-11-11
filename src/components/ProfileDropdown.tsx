@@ -39,7 +39,12 @@ export function ProfileDropdown() {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          <p>My Account</p>
+          {profile?.role && (
+            <p className="text-xs text-muted-foreground capitalize">{profile.role.replace('_', ' ')}</p>
+          )}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/profile">Our Profile</Link>
@@ -47,7 +52,7 @@ export function ProfileDropdown() {
         <DropdownMenuItem asChild>
           <Link to="/change-password">Change Password</Link>
         </DropdownMenuItem>
-        {profile?.role === 'admin' && ( // Only show for admin role
+        {profile?.role === 'super_admin' && ( // Only show for super_admin role
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

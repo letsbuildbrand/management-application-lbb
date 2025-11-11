@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { WelcomeHeader } from "@/components/WelcomeHeader";
-import { mockClients, Client, Video } from "@/data/mockData";
+import { Client, Video } from "@/data/mockData"; // Import Client, Video interfaces
 import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { ClientSatisfactionChart } from "@/components/ClientSatisfactionChart";
 import { DeliveryTrendsChart } from "@/components/DeliveryTrendsChart";
@@ -20,12 +20,18 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { format, parseISO, getMonth, getYear, isBefore, isAfter, addMonths } from "date-fns";
+import { supabase } from "@/integrations/supabase/client"; // Import supabase client
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
+import { showError } from "@/utils/toast";
 
 const AnalyticsDashboardPage = () => {
-  const [clients, setClients] = useState<Client[]>(mockClients); // Using mockClients for now, will integrate Supabase later
+  const { user, isLoading: isSessionLoading, profile } = useSession();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [allProjects, setAllProjects] = useState<Video[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [kpis, setKpis] = useState({
     totalDeliveries: 0,
-    avgSatisfaction: 0,
+    avgSatisfaction: 0, // This will need a satisfaction_ratings table or similar
     onTimeDeliveryRate: 0,
     activeClients: 0,
     onHoldClients: 0,
@@ -35,6 +41,7 @@ const AnalyticsDashboardPage = () => {
     expectedDeliveriesThisMonth: 0,
     deliveriesLastMonth: 0,
     expectedDeliveriesLastMonth: 0,
+    projectsInReview: 0,
   });
   const [satisfactionChartData, setSatisfactionChartData] = useState<
     { month: string; rating: number }[]
@@ -43,196 +50,275 @@ const AnalyticsDashboardPage = () => {
     { month: string; delivered: number; onTime: number; delayed: number; expected: number }[]
   >([]);
 
-  useEffect(() => {
-    const calculateAnalytics = () => {
-      let totalDeliveries = 0;
-      let totalSatisfaction = 0;
-      let ratedDeliveries = 0;
-      let onTimeDeliveries = 0;
-      let totalCompletedDeliveries = 0;
-      let totalDelayedDeliveries = 0;
+  const fetchAnalyticsData = useCallback(async () => {
+    if (!user || !profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+      setIsLoadingData(false);
+      return;
+    }
 
-      const now = new Date();
-      const currentMonth = getMonth(now);
-      const currentYear = getYear(now);
-      const lastMonth = getMonth(addMonths(now, -1));
-      const lastMonthYear = getYear(addMonths(now, -1));
+    setIsLoadingData(true);
+    try {
+      // Fetch all clients
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('*');
 
-      let deliveriesThisMonth = 0;
-      let expectedDeliveriesThisMonth = 0;
-      let deliveriesLastMonth = 0;
-      let expectedDeliveriesLastMonth = 0;
+      if (clientsError) {
+        console.error("Error fetching clients for analytics:", clientsError);
+        showError("Failed to load client data for analytics.");
+        setClients([]);
+        return;
+      }
+      setClients(clientsData);
 
-      const monthlyDeliveryData: {
-        [key: string]: {
-          delivered: number;
-          onTime: number;
-          delayed: number;
-          expected: number;
-        };
-      } = {};
-      const monthlySatisfactionData: { [key: string]: { sum: number; count: number } } = {};
+      // Fetch all projects
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*');
 
-      const activeClients = clients.filter((c) => c.status === "Active").length;
-      const onHoldClients = clients.filter((c) => c.status === "On Hold").length;
-      const archivedClients = clients.filter((c) => c.status === "Archived").length;
-      const totalClients = clients.length;
+      if (projectsError) {
+        console.error("Error fetching projects for analytics:", projectsError);
+        showError("Failed to load project data for analytics.");
+        setAllProjects([]);
+        return;
+      }
 
-      clients.forEach((client) => {
-        client.videos.forEach((video) => {
-          if (video.delivery_timestamp) { // Use delivery_timestamp for actual delivery
-            totalDeliveries++;
-            totalCompletedDeliveries++;
-
-            const actualDate = parseISO(video.delivery_timestamp);
-            const deadlineDate = parseISO(video.adjusted_deadline_timestamp || video.initial_deadline_timestamp);
-            const deliveryMonth = getMonth(actualDate);
-            const deliveryYear = getYear(actualDate);
-            const monthKey = format(actualDate, "MMM yy");
-
-            if (!monthlyDeliveryData[monthKey]) {
-              monthlyDeliveryData[monthKey] = { delivered: 0, onTime: 0, delayed: 0, expected: 0 };
-            }
-            monthlyDeliveryData[monthKey].delivered++;
-
-            if (isBefore(actualDate, deadlineDate) || actualDate.toDateString() === deadlineDate.toDateString()) {
-              onTimeDeliveries++;
-              monthlyDeliveryData[monthKey].onTime++;
-            } else {
-              totalDelayedDeliveries++;
-              monthlyDeliveryData[monthKey].delayed++;
-            }
-
-            if (deliveryMonth === currentMonth && deliveryYear === currentYear) {
-              deliveriesThisMonth++;
-            }
-            if (deliveryMonth === lastMonth && deliveryYear === lastMonthYear) {
-              deliveriesLastMonth++;
-            }
-          }
-
-          // Calculate expected deliveries for current and last month
-          if (video.current_status !== "Completed" && video.current_status !== "Approved") {
-            const expectedDate = parseISO(video.adjusted_deadline_timestamp || video.initial_deadline_timestamp);
-            const expectedMonth = getMonth(expectedDate);
-            const expectedYear = getYear(expectedDate);
-
-            if (expectedMonth === currentMonth && expectedYear === currentYear) {
-              expectedDeliveriesThisMonth++;
-            }
-            if (expectedMonth === lastMonth && expectedYear === lastMonthYear) {
-              expectedDeliveriesLastMonth++;
-            }
-          }
-
-          if (video.satisfactionRating !== undefined) {
-            totalSatisfaction += video.satisfactionRating;
-            ratedDeliveries++;
-          }
-        });
-
-        client.satisfactionRatings?.forEach((rating) => {
-          if (!monthlySatisfactionData[rating.month]) {
-            monthlySatisfactionData[rating.month] = { sum: 0, count: 0 };
-          }
-          monthlySatisfactionData[rating.month].sum += rating.rating;
-          monthlySatisfactionData[rating.month].count++;
-        });
-      });
-
-      const avgSatisfaction = ratedDeliveries > 0 ? totalSatisfaction / ratedDeliveries : 0;
-      const onTimeDeliveryRate =
-        totalCompletedDeliveries > 0
-          ? (onTimeDeliveries / totalCompletedDeliveries) * 100
-          : 0;
-
-      // Prepare satisfaction chart data
-      const sortedSatisfactionMonths = Object.keys(monthlySatisfactionData).sort((a, b) => {
-        const dateA = parseISO(`01 ${a}`); // Assuming 'MMM yy' format
-        const dateB = parseISO(`01 ${b}`);
-        return isBefore(dateA, dateB) ? -1 : 1;
-      });
-      const formattedSatisfactionData = sortedSatisfactionMonths.map((month) => ({
-        month,
-        rating: monthlySatisfactionData[month].sum / monthlySatisfactionData[month].count,
+      const formattedProjects: Video[] = projectsData.map(project => ({
+        id: project.id,
+        client_id: project.client_id,
+        manager_id: project.manager_id || undefined,
+        editor_id: project.editor_id || undefined,
+        title: project.title,
+        description: project.description || '',
+        raw_files_link: project.raw_files_link || undefined,
+        instructions_link: project.instructions_link || undefined,
+        current_status: project.current_status,
+        credits_cost: project.credits_cost,
+        priority: project.priority,
+        submission_timestamp: project.submission_timestamp,
+        initial_deadline_timestamp: project.initial_deadline_timestamp,
+        adjusted_deadline_timestamp: project.adjusted_deadline_timestamp || undefined,
+        delivery_timestamp: project.delivery_timestamp || undefined,
+        draft_link: project.draft_link || undefined,
+        final_delivery_link: project.final_delivery_link || undefined,
+        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
+        updates: [], // Not directly used in analytics, but part of Video interface
+        satisfactionRating: undefined, // Will need a separate table for this
+        projectType: undefined,
       }));
+      setAllProjects(formattedProjects);
 
-      // Prepare delivery chart data
-      const allMonths = new Set<string>();
-      clients.forEach(client => {
-        client.videos.forEach(video => {
-          if (video.delivery_timestamp) {
-            allMonths.add(format(parseISO(video.delivery_timestamp), "MMM yy"));
-          }
-          if (video.adjusted_deadline_timestamp || video.initial_deadline_timestamp) {
-            allMonths.add(format(parseISO(video.adjusted_deadline_timestamp || video.initial_deadline_timestamp), "MMM yy"));
-          }
-        });
-        client.satisfactionRatings?.forEach(rating => allMonths.add(rating.month));
-      });
+    } catch (error) {
+      console.error("Unexpected error fetching analytics data:", error);
+      showError("An unexpected error occurred while fetching analytics data.");
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [user, profile]);
 
-      // Add current and last month if not present
-      allMonths.add(format(now, "MMM yy"));
-      allMonths.add(format(addMonths(now, -1), "MMM yy"));
+  useEffect(() => {
+    if (!isSessionLoading && user && (profile?.role === 'admin' || profile?.role === 'super_admin')) {
+      fetchAnalyticsData();
+    }
+  }, [isSessionLoading, user, profile, fetchAnalyticsData]);
 
-      const sortedMonths = Array.from(allMonths).sort((a, b) => {
-        const dateA = parseISO(`01 ${a}`);
-        const dateB = parseISO(`01 ${b}`);
-        return isBefore(dateA, dateB) ? -1 : 1;
-      });
+  useEffect(() => {
+    if (clients.length === 0 && allProjects.length === 0) return;
 
-      const formattedDeliveryData = sortedMonths.map((month) => {
-        let monthExpected = 0;
-        clients.forEach(client => {
-          client.videos.forEach(video => {
-            if (video.current_status !== "Completed" && video.current_status !== "Approved") {
-              const expectedDeadline = video.adjusted_deadline_timestamp || video.initial_deadline_timestamp;
-              if (expectedDeadline) {
-                const expectedMonthKey = format(parseISO(expectedDeadline), "MMM yy");
-                if (expectedMonthKey === month) {
-                  monthExpected++;
-                }
-              }
+    let totalDeliveries = 0;
+    let totalSatisfaction = 0; // Placeholder, needs actual data
+    let ratedDeliveries = 0; // Placeholder, needs actual data
+    let onTimeDeliveries = 0;
+    let totalCompletedDeliveries = 0;
+    let totalDelayedDeliveries = 0;
+    let projectsInReview = 0;
+
+    const now = new Date();
+    const currentMonth = getMonth(now);
+    const currentYear = getYear(now);
+    const lastMonth = getMonth(addMonths(now, -1));
+    const lastMonthYear = getYear(addMonths(now, -1));
+
+    let deliveriesThisMonth = 0;
+    let expectedDeliveriesThisMonth = 0;
+    let deliveriesLastMonth = 0;
+    let expectedDeliveriesLastMonth = 0;
+
+    const monthlyDeliveryData: {
+      [key: string]: {
+        delivered: number;
+        onTime: number;
+        delayed: number;
+        expected: number;
+      };
+    } = {};
+    const monthlySatisfactionData: { [key: string]: { sum: number; count: number } } = {}; // Placeholder
+
+    const activeClients = clients.filter((c) => c.status === "Active").length;
+    const onHoldClients = clients.filter((c) => c.status === "On Hold").length;
+    const archivedClients = clients.filter((c) => c.status === "Archived").length;
+    const totalClients = clients.length;
+
+    allProjects.forEach((project) => {
+      if (project.delivery_timestamp) {
+        totalDeliveries++;
+        totalCompletedDeliveries++;
+
+        const actualDate = parseISO(project.delivery_timestamp);
+        const deadlineDate = parseISO(project.adjusted_deadline_timestamp || project.initial_deadline_timestamp);
+        const deliveryMonth = getMonth(actualDate);
+        const deliveryYear = getYear(actualDate);
+        const monthKey = format(actualDate, "MMM yy");
+
+        if (!monthlyDeliveryData[monthKey]) {
+          monthlyDeliveryData[monthKey] = { delivered: 0, onTime: 0, delayed: 0, expected: 0 };
+        }
+        monthlyDeliveryData[monthKey].delivered++;
+
+        if (isBefore(actualDate, deadlineDate) || actualDate.toDateString() === deadlineDate.toDateString()) {
+          onTimeDeliveries++;
+          monthlyDeliveryData[monthKey].onTime++;
+        } else {
+          totalDelayedDeliveries++;
+          monthlyDeliveryData[monthKey].delayed++;
+        }
+
+        if (deliveryMonth === currentMonth && deliveryYear === currentYear) {
+          deliveriesThisMonth++;
+        }
+        if (deliveryMonth === lastMonth && deliveryYear === lastMonthYear) {
+          deliveriesLastMonth++;
+        }
+      }
+
+      if (project.current_status === "Review" || project.current_status === "Awaiting Feedback") {
+        projectsInReview++;
+      }
+
+      // Calculate expected deliveries for current and last month
+      if (project.current_status !== "Completed" && project.current_status !== "Approved") {
+        const expectedDate = parseISO(project.adjusted_deadline_timestamp || project.initial_deadline_timestamp);
+        const expectedMonth = getMonth(expectedDate);
+        const expectedYear = getYear(expectedDate);
+
+        if (expectedMonth === currentMonth && expectedYear === currentYear) {
+          expectedDeliveriesThisMonth++;
+        }
+        if (expectedMonth === lastMonth && expectedYear === lastMonthYear) {
+          expectedDeliveriesLastMonth++;
+        }
+      }
+
+      // Placeholder for satisfaction ratings
+      // if (project.satisfactionRating !== undefined) {
+      //   totalSatisfaction += project.satisfactionRating;
+      //   ratedDeliveries++;
+      // }
+    });
+
+    const avgSatisfaction = ratedDeliveries > 0 ? totalSatisfaction / ratedDeliveries : 0;
+    const onTimeDeliveryRate =
+      totalCompletedDeliveries > 0
+        ? (onTimeDeliveries / totalCompletedDeliveries) * 100
+        : 0;
+
+    // Prepare satisfaction chart data (placeholder for now)
+    const formattedSatisfactionData = [
+      { month: "Jan 24", rating: 4.5 },
+      { month: "Feb 24", rating: 4.2 },
+      { month: "Mar 24", rating: 4.7 },
+      { month: "Apr 24", rating: 4.6 },
+      { month: "May 24", rating: 4.8 },
+    ];
+
+    // Prepare delivery chart data
+    const allMonths = new Set<string>();
+    allProjects.forEach(project => {
+      if (project.delivery_timestamp) {
+        allMonths.add(format(parseISO(project.delivery_timestamp), "MMM yy"));
+      }
+      if (project.adjusted_deadline_timestamp || project.initial_deadline_timestamp) {
+        allMonths.add(format(parseISO(project.adjusted_deadline_timestamp || project.initial_deadline_timestamp), "MMM yy"));
+      }
+    });
+
+    // Add current and last month if not present
+    allMonths.add(format(now, "MMM yy"));
+    allMonths.add(format(addMonths(now, -1), "MMM yy"));
+
+    const sortedMonths = Array.from(allMonths).sort((a, b) => {
+      const dateA = parseISO(`01 ${a}`);
+      const dateB = parseISO(`01 ${b}`);
+      return isBefore(dateA, dateB) ? -1 : 1;
+    });
+
+    const formattedDeliveryData = sortedMonths.map((month) => {
+      let monthExpected = 0;
+      allProjects.forEach(project => {
+        if (project.current_status !== "Completed" && project.current_status !== "Approved") {
+          const expectedDeadline = project.adjusted_deadline_timestamp || project.initial_deadline_timestamp;
+          if (expectedDeadline) {
+            const expectedMonthKey = format(parseISO(expectedDeadline), "MMM yy");
+            if (expectedMonthKey === month) {
+              monthExpected++;
             }
-          });
-        });
-
-        return {
-          month,
-          delivered: monthlyDeliveryData[month]?.delivered || 0,
-          onTime: monthlyDeliveryData[month]?.onTime || 0,
-          delayed: monthlyDeliveryData[month]?.delayed || 0,
-          expected: monthExpected,
-        };
+          }
+        }
       });
 
+      return {
+        month,
+        delivered: monthlyDeliveryData[month]?.delivered || 0,
+        onTime: monthlyDeliveryData[month]?.onTime || 0,
+        delayed: monthlyDeliveryData[month]?.delayed || 0,
+        expected: monthExpected,
+      };
+    });
 
-      setKpis({
-        totalDeliveries,
-        avgSatisfaction,
-        onTimeDeliveryRate,
-        activeClients,
-        onHoldClients,
-        archivedClients,
-        totalClients,
-        deliveriesThisMonth,
-        expectedDeliveriesThisMonth,
-        deliveriesLastMonth,
-        expectedDeliveriesLastMonth,
-      });
-      setSatisfactionChartData(formattedSatisfactionData);
-      setDeliveryChartData(formattedDeliveryData);
-    };
 
-    calculateAnalytics();
-  }, [clients]);
+    setKpis({
+      totalDeliveries,
+      avgSatisfaction,
+      onTimeDeliveryRate,
+      activeClients,
+      onHoldClients,
+      archivedClients,
+      totalClients,
+      deliveriesThisMonth,
+      expectedDeliveriesThisMonth,
+      deliveriesLastMonth,
+      expectedDeliveriesLastMonth,
+      projectsInReview,
+    });
+    setSatisfactionChartData(formattedSatisfactionData);
+    setDeliveryChartData(formattedDeliveryData);
+  }, [clients, allProjects]);
+
+  if (isSessionLoading || isLoadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <p>Loading analytics dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!user || (profile?.role !== 'admin' && profile?.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-8 mt-16">
+          <p className="text-xl text-muted-foreground">Access Denied: You must be an admin or super admin to view this page.</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       <main className="flex-1 px-4 sm:px-6 md:px-10 py-8 mt-16">
         <div className="max-w-screen-2xl mx-auto">
-          <WelcomeHeader userName="Yadish" />
+          <WelcomeHeader userName={profile?.first_name || "Admin"} />
           <h1 className="text-3xl font-bold tracking-tight mb-8 text-left px-4">Analytics Dashboard</h1>
 
           {/* KPI Cards */}
@@ -284,7 +370,7 @@ const AnalyticsDashboardPage = () => {
             />
             <AnalyticsCard
               title="Projects in Review"
-              value={mockClients.reduce((acc, client) => acc + client.videos.filter(v => v.current_status === "Review" || v.current_status === "Awaiting Feedback").length, 0)}
+              value={kpis.projectsInReview}
               description="Awaiting client feedback"
               icon={<Hourglass className="h-5 w-5 text-orange-500" />}
             />

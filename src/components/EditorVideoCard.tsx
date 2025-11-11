@@ -49,11 +49,6 @@ export const EditorVideoCard: React.FC<EditorVideoCardProps> = ({ video, onUpdat
   const handleStatusChange = async (newStatus: string) => {
     await onUpdateVideo(video.id, {
       current_status: newStatus,
-      // updates: [...(video.updates || []), { // Assuming updates are handled by backend or a separate table
-      //   timestamp: new Date().toISOString(),
-      //   message: `Status changed to: ${newStatus} by editor.`,
-      //   status: newStatus.toLowerCase() as any,
-      // }],
     });
     showSuccess(`Status for "${video.title}" updated to ${newStatus}.`);
   };

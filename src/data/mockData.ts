@@ -14,8 +14,9 @@ export interface Manager {
 
 export interface Video {
   id: string;
-  client_id: string; // Foreign key to profiles table (client role)
-  assigned_editor_id?: string; // Foreign key to profiles table (editor role)
+  client_id: string; // Foreign key to clients table
+  manager_id?: string; // Foreign key to profiles table (manager role)
+  editor_id?: string; // Foreign key to profiles table (editor role)
   title: string;
   description?: string;
   raw_files_link?: string;
@@ -25,29 +26,24 @@ export interface Video {
   priority: string; // 'Low', 'Medium', 'High', 'Urgent'
   submission_timestamp: string; // ISO string
   initial_deadline_timestamp: string; // ISO string
-  adjusted_deadline_timestamp: string; // ISO string
+  adjusted_deadline_timestamp?: string;
   delivery_timestamp?: string; // ISO string, set when project is approved/completed
   draft_link?: string;
   final_delivery_link?: string;
-  thumbnailUrl?: string; // For display purposes, might not be in DB directly
-  notes: string[]; // Client-facing notes
-  internalNotes?: string[]; // Internal team notes
+  thumbnail_url?: string; // For display purposes, might not be in DB directly
+  notes: string[]; // Client-facing notes (will be replaced by chat_messages)
+  internalNotes?: string[]; // Internal team notes (will be replaced by chat_messages with is_internal_only)
   satisfactionRating?: number; // 1-5 rating from client
   projectType?: string; // e.g., "Ad", "Explainer", "Social Media"
 }
 
-export interface Client { // This now represents a profile with a 'client' role
-  id: string; // This will be the auth.users.id
-  name: string; // Combined first_name and last_name
-  contact_email?: string; // From profiles.email
-  contact_phone?: string; // From profiles.contact_phone
-  monthly_credits: number; // From profiles.monthly_credits
-  credits_remaining: number; // From profiles.credits_remaining
-  status: "Active" | "On Hold" | "Archived"; // From profiles.status
+export interface Client { // This now represents a client company
+  id: string; // This will be the clients.id
+  name: string; // From clients.name
+  status: "Active" | "On Hold" | "Archived"; // From clients.status
   assigned_manager_id?: string; // Foreign key to profiles table (manager role)
-  joinDate?: string; // Date client joined
-  lastActive?: string; // Last date client had an active project/interaction
-  satisfactionRatings?: { month: string; rating: number }[]; // Monthly satisfaction ratings (might be fetched from another table or computed)
+  monthly_credits?: number; // From profiles.monthly_credits (for the primary client user)
+  credits_remaining?: number; // From profiles.credits_remaining (for the primary client user)
   activeProjects?: number; // Computed property
   unassignedTasks?: number; // Computed property
 }

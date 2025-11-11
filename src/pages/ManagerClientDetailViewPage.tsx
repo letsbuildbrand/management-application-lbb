@@ -15,14 +15,14 @@ import { useSession } from "@/components/SessionContextProvider"; // Import useS
 
 const ManagerClientDetailViewPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
-  const { user, isLoading: isSessionLoading } = useSession();
+  const { user, isLoading: isSessionLoading, profile } = useSession();
   const [client, setClient] = useState<Client | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   const fetchClientProjects = useCallback(async () => {
-    if (!user || !clientId) {
+    if (!user || !profile || profile.role !== 'manager' || !clientId) {
       setIsLoadingData(false);
       return;
     }
@@ -34,21 +34,23 @@ const ManagerClientDetailViewPage = () => {
         .from('clients')
         .select('*')
         .eq('id', clientId)
+        .eq('assigned_manager_id', user.id) // Ensure manager can only see their assigned clients
         .single();
 
       if (clientError) {
         console.error("Error fetching client data:", clientError);
-        showError("Failed to load client data.");
+        showError("Failed to load client data or you are not assigned to this client.");
         setClient(null);
         return;
       }
       setClient(clientData);
 
-      // Fetch projects for this client
+      // Fetch projects for this client, ensuring manager_id matches current user
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('*')
         .eq('client_id', clientId)
+        .eq('manager_id', user.id) // Ensure manager can only see projects they manage for this client
         .order('submission_timestamp', { ascending: false });
 
       if (projectsError) {
@@ -61,7 +63,8 @@ const ManagerClientDetailViewPage = () => {
       const formattedVideos: Video[] = projectsData.map(project => ({
         id: project.id,
         client_id: project.client_id,
-        assigned_editor_id: project.assigned_editor_id || undefined,
+        manager_id: project.manager_id || undefined,
+        editor_id: project.editor_id || undefined,
         title: project.title,
         description: project.description || '',
         raw_files_link: project.raw_files_link || undefined,
@@ -75,10 +78,8 @@ const ManagerClientDetailViewPage = () => {
         delivery_timestamp: project.delivery_timestamp || undefined,
         draft_link: project.draft_link || undefined,
         final_delivery_link: project.final_delivery_link || undefined,
-        thumbnailUrl: project.thumbnailUrl || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
+        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
         updates: [], // Assuming updates are fetched separately or managed by backend
-        notes: [], // Assuming notes are fetched separately or managed by backend
-        internalNotes: [], // Assuming internal notes are fetched separately or managed by backend
         satisfactionRating: undefined, // Assuming satisfaction rating is fetched separately
         projectType: undefined, // Assuming project type is fetched separately
       }));
@@ -90,20 +91,21 @@ const ManagerClientDetailViewPage = () => {
     } finally {
       setIsLoadingData(false);
     }
-  }, [user, clientId]);
+  }, [user, profile, clientId]);
 
   useEffect(() => {
-    if (!isSessionLoading && user && clientId) {
+    if (!isSessionLoading && user && profile?.role === 'manager' && clientId) {
       fetchClientProjects();
     }
-  }, [isSessionLoading, user, clientId, fetchClientProjects]);
+  }, [isSessionLoading, user, profile, clientId, fetchClientProjects]);
 
   const handleUpdateVideo = async (videoId: string, updates: Partial<Video>) => {
     try {
       const { error } = await supabase
         .from('projects')
         .update(updates)
-        .eq('id', videoId);
+        .eq('id', videoId)
+        .eq('manager_id', user?.id); // Ensure manager can only update their own projects
 
       if (error) {
         throw error;
@@ -124,7 +126,7 @@ const ManagerClientDetailViewPage = () => {
     );
   }
 
-  if (!user || !client) {
+  if (!user || profile?.role !== 'manager' || !client) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navbar />
@@ -159,7 +161,7 @@ const ManagerClientDetailViewPage = () => {
               <TabsTrigger value="list">List View</TabsTrigger>
             </TabsList>
             <TabsContent value="kanban" className="mt-6">
-              <KanbanBoard videos={videos.map(video => ({ ...video, showInternalNotes: true }))} />
+              <KanbanBoard videos={videos} />
             </TabsContent>
             <TabsContent value="list" className="mt-6">
               <div className="space-y-6">

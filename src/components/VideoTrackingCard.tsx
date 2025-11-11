@@ -25,7 +25,8 @@ interface VideoUpdate {
 export interface Video { // Exported for reuse
   id: string;
   client_id: string; // Foreign key to clients table
-  assigned_editor_id?: string; // New: ID of the assigned editor
+  manager_id?: string; // New: ID of the assigned manager
+  editor_id?: string; // New: ID of the assigned editor
   title: string;
   description?: string;
   raw_files_link?: string;
@@ -39,18 +40,14 @@ export interface Video { // Exported for reuse
   delivery_timestamp?: string; // Added for countdown
   draft_link?: string;
   final_delivery_link?: string;
-  thumbnailUrl?: string;
+  thumbnail_url?: string;
   updates: VideoUpdate[];
-  notes: string[];
-  internalNotes?: string[];
   satisfactionRating?: number;
   projectType?: string;
 }
 
 interface VideoTrackingCardProps {
   video: Video;
-  showInternalNotes?: boolean; // New prop to conditionally show internal notes
-  onAddNote?: (videoId: string, note: string, isInternal: boolean) => void; // Updated prop for adding notes
   onUpdateVideo?: (videoId: string, updates: Partial<Video>) => Promise<void>; // New prop for updating video
 }
 
@@ -93,26 +90,9 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, showInternalNotes = false, onAddNote, onUpdateVideo }) => {
+export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, onUpdateVideo }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [newNote, setNewNote] = useState("");
-  const [videoNotes, setVideoNotes] = useState(video.notes);
-  const [internalVideoNotes, setInternalVideoNotes] = useState(video.internalNotes || []);
   const [isApproving, setIsApproving] = useState(false);
-
-  const handleAddNote = () => {
-    if (newNote.trim()) {
-      if (showInternalNotes) {
-        setInternalVideoNotes([...internalVideoNotes, newNote.trim()]);
-        if (onAddNote) onAddNote(video.id, newNote.trim(), true);
-      } else {
-        setVideoNotes([...videoNotes, newNote.trim()]);
-        if (onAddNote) onAddNote(video.id, newNote.trim(), false);
-      }
-      setNewNote("");
-      showSuccess("Note added successfully!");
-    }
-  };
 
   const handleApprove = async () => {
     if (!onUpdateVideo) return;
@@ -134,11 +114,14 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, sho
   const handleRequestChanges = async (feedback: string) => {
     if (!onUpdateVideo) return;
     try {
+      // Instead of adding to video.notes, we'll send this as a chat message
+      // This requires the ChatModal to have an external send message function or similar
+      // For now, we'll just update the status and show a success message.
       await onUpdateVideo(video.id, {
         current_status: 'Need Changes',
-        notes: [...video.notes, `Client Feedback: ${feedback}`], // Add feedback to client notes
       });
-      showSuccess(`Changes requested for "${video.title}". Feedback sent to editor.`);
+      // Ideally, here you'd also send a chat message with the feedback
+      showSuccess(`Changes requested for "${video.title}". Feedback: "${feedback}"`);
     } catch (error) {
       console.error("Error requesting changes:", error);
       showError("Failed to request changes. Please try again.");
@@ -147,25 +130,25 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, sho
 
   const deadlineToUse = video.adjusted_deadline_timestamp || video.initial_deadline_timestamp;
 
-  const isClientReviewMode = video.current_status.toLowerCase() === 'review' && !showInternalNotes;
+  const isClientReviewMode = video.current_status.toLowerCase() === 'review'; // Client can only approve/request changes if in 'review' status
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
       <Card className="w-full shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
           <div className="flex items-center space-x-4">
-            <img src={video.thumbnailUrl} alt={video.title} className="h-16 w-16 rounded-md object-cover" />
+            <img src={video.thumbnail_url} alt={video.title} className="h-16 w-16 rounded-md object-cover" />
             <div>
               <CardTitle className="text-lg font-semibold">{video.title}</CardTitle>
               <CardDescription className="text-sm text-muted-foreground">{video.description}</CardDescription>
             </div>
           </div>
           <div className="flex flex-col items-end space-y-2">
-            <Badge variant={getStatusBadgeVariant(video.currentStatus)}>{video.currentStatus}</Badge>
+            <Badge variant={getStatusBadgeVariant(video.current_status)}>{video.current_status}</Badge>
             {deadlineToUse && (
               <LiveCountdown
                 deadlineTimestamp={deadlineToUse}
-                currentStatus={video.currentStatus}
+                currentStatus={video.current_status}
                 deliveryTimestamp={video.delivery_timestamp} // Pass delivery timestamp
                 className="text-sm"
               />
@@ -205,80 +188,23 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, sho
             <h3 className="text-md font-semibold">Project Timeline</h3>
             <div className="relative pl-6">
               <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-border" />
-              {video.updates.map((update, index) => (
-                <div key={index} className="relative mb-4 last:mb-0">
-                  <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-background z-10">
-                    {getStatusIcon(update.status)}
+              {video.updates.length > 0 ? (
+                video.updates.map((update, index) => (
+                  <div key={index} className="relative mb-4 last:mb-0">
+                    <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-background z-10">
+                      {getStatusIcon(update.status)}
+                    </div>
+                    <div className="ml-2">
+                      <p className="text-sm font-medium">{update.message}</p>
+                      <p className="text-xs text-muted-foreground">{update.timestamp}</p>
+                    </div>
                   </div>
-                  <div className="ml-2">
-                    <p className="text-sm font-medium">{update.message}</p>
-                    <p className="text-xs text-muted-foreground">{update.timestamp}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Client Notes Section */}
-          <div className="space-y-3 pt-4">
-            <h3 className="text-md font-semibold">Client Notes</h3>
-            <div className="space-y-2">
-              {videoNotes.length > 0 ? (
-                videoNotes.map((note, index) => (
-                  <p key={index} className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
-                    <MessageSquareText className="inline h-4 w-4 mr-2 text-primary" />
-                    {note}
-                  </p>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No client notes added yet.</p>
+                <p className="text-sm text-muted-foreground">No updates yet.</p>
               )}
             </div>
-            {/* Only allow adding client notes if not in manager view or if specific prop allows */}
-            {!showInternalNotes && (
-              <div className="flex space-x-2">
-                <Textarea
-                  placeholder="Add a new note for this video..."
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  className="flex-grow"
-                />
-                <Button onClick={handleAddNote} className="shrink-0">
-                  <PlusCircle className="h-4 w-4 mr-2" /> Add Note
-                </Button>
-              </div>
-            )}
           </div>
-
-          {/* Internal Notes Section (Manager/Team Only) */}
-          {showInternalNotes && (
-            <div className="space-y-3 pt-4 border-t border-border">
-              <h3 className="text-md font-semibold text-logo-purple">Internal Team Notes</h3>
-              <div className="space-y-2">
-                {internalVideoNotes.length > 0 ? (
-                  internalVideoNotes.map((note, index) => (
-                    <p key={index} className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
-                      <MessageSquareText className="inline h-4 w-4 mr-2 text-logo-purple" />
-                      {note}
-                    </p>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No internal notes added yet.</p>
-                )}
-              </div>
-              <div className="flex space-x-2">
-                <Textarea
-                  placeholder="Add an internal team note..."
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  className="flex-grow"
-                />
-                <Button onClick={handleAddNote} className="shrink-0" variant="secondary">
-                  <PlusCircle className="h-4 w-4 mr-2" /> Add Internal Note
-                </Button>
-              </div>
-            </div>
-          )}
         </CollapsibleContent>
       </Card>
     </Collapsible>

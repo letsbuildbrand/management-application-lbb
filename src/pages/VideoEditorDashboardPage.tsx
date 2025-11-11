@@ -33,7 +33,7 @@ const VideoEditorDashboardPage = () => {
   };
 
   const fetchAssignedVideos = useCallback(async () => {
-    if (!user) {
+    if (!user || !profile || profile.role !== 'editor') {
       setIsLoadingVideos(false);
       return;
     }
@@ -43,7 +43,7 @@ const VideoEditorDashboardPage = () => {
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('*')
-        .eq('assigned_editor_id', user.id)
+        .eq('editor_id', user.id) // Changed assigned_editor_id to editor_id
         .neq('current_status', 'Completed') // Exclude completed projects from active view
         .neq('current_status', 'Approved'); // Exclude approved projects from active view
 
@@ -57,12 +57,13 @@ const VideoEditorDashboardPage = () => {
       const formattedVideos: Video[] = projectsData.map(project => ({
         id: project.id,
         client_id: project.client_id,
-        assignedEditorId: project.assigned_editor_id || undefined,
+        manager_id: project.manager_id || undefined,
+        editor_id: project.editor_id || undefined,
         title: project.title,
         description: project.description || '',
         raw_files_link: project.raw_files_link || undefined,
         instructions_link: project.instructions_link || undefined,
-        currentStatus: project.current_status,
+        current_status: project.current_status,
         credits_cost: project.credits_cost,
         priority: project.priority,
         submission_timestamp: project.submission_timestamp,
@@ -71,10 +72,8 @@ const VideoEditorDashboardPage = () => {
         delivery_timestamp: project.delivery_timestamp || undefined,
         draft_link: project.draft_link || undefined,
         final_delivery_link: project.final_delivery_link || undefined,
-        thumbnailUrl: project.thumbnailUrl || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
+        thumbnail_url: project.thumbnail_url || "https://via.placeholder.com/150/cccccc/ffffff?text=Video", // Placeholder
         updates: [], // Assuming updates are fetched separately or managed by backend
-        notes: [], // Assuming notes are fetched separately or managed by backend
-        internalNotes: [], // Assuming internal notes are fetched separately or managed by backend
         satisfactionRating: undefined, // Assuming satisfaction rating is fetched separately
         projectType: undefined, // Assuming project type is fetched separately
       }));
@@ -93,20 +92,21 @@ const VideoEditorDashboardPage = () => {
     } finally {
       setIsLoadingVideos(false);
     }
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
-    if (!isSessionLoading && user) {
+    if (!isSessionLoading && user && profile?.role === 'editor') {
       fetchAssignedVideos();
     }
-  }, [isSessionLoading, user, fetchAssignedVideos]);
+  }, [isSessionLoading, user, profile, fetchAssignedVideos]);
 
   const handleUpdateVideo = async (videoId: string, updates: Partial<Video>) => {
     try {
       const { error } = await supabase
         .from('projects')
         .update(updates)
-        .eq('id', videoId);
+        .eq('id', videoId)
+        .eq('editor_id', user?.id); // Ensure editor can only update their own projects
 
       if (error) {
         throw error;

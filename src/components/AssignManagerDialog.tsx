@@ -37,24 +37,39 @@ export const AssignManagerDialog: React.FC<AssignManagerDialogProps> = ({ childr
   useEffect(() => {
     const fetchManagers = async () => {
       setIsLoadingManagers(true);
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url, role')
         .eq('role', 'manager');
 
-      if (error) {
-        console.error("Error fetching managers:", error);
+      if (profilesError) {
+        console.error("Error fetching managers:", profilesError);
         showError("Failed to load managers.");
       } else {
-        // For clientLoad, we'd ideally query the 'clients' table to count assigned clients per manager.
-        // For now, we'll mock it or set to 0.
-        const fetchedManagers: Manager[] = data.map(profile => ({
-          id: profile.id,
-          name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
-          avatar: profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.first_name}`,
-          clientLoad: 0, // Placeholder, will be updated in ClientAssignerDashboardPage
+        const managersWithLoad = await Promise.all(profilesData.map(async (profile) => {
+          const { count, error: countError } = await supabase
+            .from('clients') // Count clients from clients table
+            .select('id', { count: 'exact' })
+            .eq('assigned_manager_id', profile.id);
+
+          if (countError) {
+            console.error(`Error counting clients for manager ${profile.id}:`, countError);
+            return {
+              id: profile.id,
+              name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
+              avatar: profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.first_name}`,
+              clientLoad: 0,
+            };
+          }
+
+          return {
+            id: profile.id,
+            name: `${profile.first_name} ${profile.last_name || ''}`.trim(),
+            avatar: profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.first_name}`,
+            clientLoad: count || 0,
+          };
         }));
-        setManagers(fetchedManagers);
+        setManagers(managersWithLoad);
       }
       setIsLoadingManagers(false);
     };

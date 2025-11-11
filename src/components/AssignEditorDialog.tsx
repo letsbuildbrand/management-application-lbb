@@ -51,7 +51,7 @@ export const AssignEditorDialog: React.FC<AssignEditorDialogProps> = ({ children
           const { count, error: countError } = await supabase
             .from('projects')
             .select('id', { count: 'exact' })
-            .eq('assigned_editor_id', profile.id)
+            .eq('editor_id', profile.id) // Changed assigned_editor_id to editor_id
             .neq('current_status', 'Completed')
             .neq('current_status', 'Approved');
 
