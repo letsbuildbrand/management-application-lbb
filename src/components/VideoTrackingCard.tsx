@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronUp, MessageSquareText, PlusCircle, CheckCircle, Clock, Loader, AlertCircle } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
+import { LiveCountdown } from "@/components/LiveCountdown"; // Import LiveCountdown
 
 interface VideoUpdate {
   timestamp: string;
@@ -29,6 +30,8 @@ export interface Video { // Exported for reuse
   notes: string[];
   assignedEditorId?: string; // New: ID of the assigned editor
   internalNotes?: string[]; // New: Notes visible only to the team/manager
+  initial_deadline_timestamp: string; // Added for countdown
+  adjusted_deadline_timestamp?: string; // Added for countdown
 }
 
 interface VideoTrackingCardProps {
@@ -94,6 +97,8 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, sho
     }
   };
 
+  const deadlineToUse = video.adjusted_deadline_timestamp || video.initial_deadline_timestamp;
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
       <Card className="w-full shadow-md">
@@ -105,8 +110,15 @@ export const VideoTrackingCard: React.FC<VideoTrackingCardProps> = ({ video, sho
               <CardDescription className="text-sm text-muted-foreground">{video.description}</CardDescription>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col items-end space-y-2">
             <Badge variant={getStatusBadgeVariant(video.currentStatus)}>{video.currentStatus}</Badge>
+            {deadlineToUse && (
+              <LiveCountdown
+                deadlineTimestamp={deadlineToUse}
+                currentStatus={video.currentStatus}
+                className="text-sm"
+              />
+            )}
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="icon">
                 {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
