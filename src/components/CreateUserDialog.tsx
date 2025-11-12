@@ -136,6 +136,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ children, on
                 <SelectItem value="editor">Editor</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="client_assigner">Client Assigner</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem> {/* Added Super Admin */}
               </SelectContent>
             </Select>
           </div>
