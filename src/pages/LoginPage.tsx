@@ -1,16 +1,53 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { showSuccess, showError } from '@/utils/toast'; // Import toast utilities
+import { CreateUserDialog } from '@/components/CreateUserDialog'; // Import CreateUserDialog
+import { Button } from '@/components/ui/button'; // Import Button for the dialog trigger
 
 const LoginPage = () => {
   const { session, isLoading } = useSession();
   const navigate = useNavigate();
+
+  // Function to handle user creation via the Edge Function
+  const handleCreateUser = async (firstName: string, email: string, password: string, role: string) => {
+    try {
+      const companyName = role === 'client' ? `${firstName} Company` : undefined;
+
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName: '', // Assuming last name is optional or handled by trigger
+          role,
+          companyName,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      showSuccess(`User "${firstName}" (${role}) created successfully! An email has been sent to ${email} for verification.`);
+    } catch (error: any) {
+      console.error("Error creating user via Edge Function:", error.message);
+      showError(`Failed to create user: ${error.message}`);
+      throw error; // Re-throw to be caught by the dialog's error handling
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && session) {
@@ -92,6 +129,17 @@ const LoginPage = () => {
           magicLink={true}
           showLinks={true}
         />
+        {/* Temporary button to create first super_admin user */}
+        <div className="mt-6 text-center">
+          <CreateUserDialog onCreateUser={handleCreateUser}>
+            <Button variant="outline" className="w-full">
+              Create First Admin User
+            </Button>
+          </CreateUserDialog>
+          <p className="text-xs text-muted-foreground mt-2">
+            Use this to create your initial super admin account if you don't have one.
+          </p>
+        </div>
       </div>
     </div>
   );
