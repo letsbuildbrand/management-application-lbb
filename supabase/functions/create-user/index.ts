@@ -43,7 +43,72 @@ serve(async (req) => {
       });
     }
 
-    // The handle_new_user trigger will automatically create the profile and client entry.
+    const newUserId = authData.user?.id;
+
+    if (!newUserId) {
+      throw new Error("User ID not returned after creation.");
+    }
+
+    // Manually insert into public.profiles table
+    const { error: profileInsertError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: newUserId,
+        username: firstName, // Using firstName as username
+        first_name: firstName,
+        last_name: lastName,
+        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${firstName}`, // Default avatar
+        role: role,
+        monthly_credits: role === 'client' ? 5 : 0, // Default credits for client
+        credits_remaining: role === 'client' ? 5 : 0,
+        status: 'Active',
+      });
+
+    if (profileInsertError) {
+      console.error("Supabase Profile Insert Error:", profileInsertError);
+      // Consider rolling back auth user creation if profile insert fails, or handle gracefully
+      return new Response(JSON.stringify({ error: `Failed to create user profile: ${profileInsertError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
+    // If the new user is a client, create a corresponding entry in the clients table and user_client_mapping
+    if (role === 'client' && companyName) {
+      const { data: clientCompanyData, error: clientCompanyError } = await supabaseAdmin
+        .from('clients')
+        .insert({
+          name: companyName,
+          status: 'Active',
+        })
+        .select('id')
+        .single();
+
+      if (clientCompanyError) {
+        console.error("Supabase Client Company Insert Error:", clientCompanyError);
+        return new Response(JSON.stringify({ error: `Failed to create client company: ${clientCompanyError.message}` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        });
+      }
+
+      if (clientCompanyData?.id) {
+        const { error: mappingError } = await supabaseAdmin
+          .from('user_client_mapping')
+          .insert({
+            user_id: newUserId,
+            client_id: clientCompanyData.id,
+          });
+
+        if (mappingError) {
+          console.error("Supabase User Client Mapping Insert Error:", mappingError);
+          return new Response(JSON.stringify({ error: `Failed to create user-client mapping: ${mappingError.message}` }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          });
+        }
+      }
+    }
 
     return new Response(JSON.stringify({ message: 'User created successfully', user: authData.user }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
